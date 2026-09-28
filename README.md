@@ -1,217 +1,135 @@
-# DietPlanner — WinUI 3
+# DietPlanner
 
-Це адаптована версія DietPlanner, у якій **UI перенесено з WPF на WinUI 3 / Windows App SDK**.
+Локальний Windows-застосунок для планування харчування, контролю калорій і макронутрієнтів та ведення щоденника прийомів їжі. Програма працює без обов'язкового бекенду: користувачі, каталог продуктів, страви, плани й історія зберігаються у локальній SQLite-базі.
 
-## Архітектура
+> **Важливо:** це WPF-застосунок, а не WinUI 3. Фактична конфігурація проєкту визначена у `DietPlanner.csproj` (`UseWPF=true`, .NET 10 для Windows). Застосунок не є медичним пристроєм і не замінює консультацію лікаря або дієтолога.
 
-Бізнес-частина збережена:
+## Можливості
 
-- `Models/` — доменні моделі;
-- `Data/` — EF Core + SQLite та початкові JSON-дані;
-- `Services/` — бізнес-операції та контракти;
-- `ViewModels/` — MVVM через CommunityToolkit.Mvvm.
+- реєстрація, вхід, вихід і автоматичний вхід за локальним токеном сесії;
+- профіль користувача: дата народження, стать, зріст, вага, активність, ціль і примітки про стан здоров'я;
+- розрахунок базової потреби в енергії, цільових калорій і КБЖВ;
+- генерація плану харчування на день або на 7 днів;
+- вибір 3–6 прийомів їжі та випадкова варіативність меню;
+- урахування дієтичних обмежень і алергенів;
+- каталог категорій, продуктів і страв з інгредієнтами;
+- пошук, фільтрація та сортування каталогу;
+- імпорт стартових категорій, продуктів і страв із JSON-файлів;
+- додавання фактично спожитої їжі та відмітка виконання пунктів плану;
+- контроль водного балансу;
+- статистика, історія планів, журнал дій і скасування операцій;
+- експорт звітів;
+- інтеграція з Open Food Facts для пошуку продуктів;
+- українська та англійська локалізація інтерфейсу.
 
-Переписано presentation layer:
+## Технології
 
-- `App.xaml` / `App.xaml.cs`;
-- `MainWindow.xaml` / `MainWindow.xaml.cs`;
-- усі `Views/*.xaml` та code-behind;
-- `NavigationService`;
-- converters;
-- localization resource loading;
-- XAML styles/theme.
+- **C# / .NET 10** — основна платформа;
+- **WPF** — desktop UI та XAML;
+- **MVVM** — CommunityToolkit.Mvvm;
+- **Entity Framework Core 9 + SQLite** — локальне зберігання даних;
+- **Microsoft.Extensions.DependencyInjection** — dependency injection;
+- **BCrypt.Net-Next** — хешування паролів;
+- **Open Food Facts API** і MyMemory API — зовнішній пошук продуктів та допоміжний переклад запитів.
 
-WPF `DataGrid` замінено на WinUI `ListView` + XAML-розмітку, щоб не тягнути сторонні UI-бібліотеки.
+Поточний target framework — `net10.0-windows`. Проєкт запускається як Windows desktop executable (`WinExe`) і не має окремого web-сервера.
 
-## Версії проєкту
-
-- .NET 10
-- Windows App SDK `2.5.1`
-- Windows SDK Build Tools `10.0.26100.9169`
-- target framework: `net10.0-windows10.0.26100.0`
-- minimum Windows: `10.0.19041.0`
-- platform: `x64`
-- deployment mode: **unpackaged** (`WindowsPackageType=None`)
-
-## Що потрібно встановити на Windows
-
-1. **Visual Studio 2026**.
-2. У Visual Studio Installer → Workloads увімкнути **WinUI application development**.
-3. Переконатися, що встановлений Windows SDK 26100.x.
-4. У Windows увімкнути Developer Mode.
-5. Встановити .NET 10 SDK.
-
-Microsoft рекомендує саме WinUI application development workload для створення WinUI 3 застосунків; Developer Mode теж потрібен для стандартного середовища розробки. Див. офіційний quick start Microsoft Learn.
-
-## Запуск — рекомендований спосіб
-
-### 1. Розпакуй архів
-
-Наприклад:
+## Структура проєкту
 
 ```text
-C:\Projects\DietPlanner\
+DietPlanner.csproj       # конфігурація WPF-проєкту та NuGet-залежності
+DietPlanner.sln          # solution Visual Studio
+App.xaml(.cs)            # запуск застосунку, DI, ініціалізація БД та стартова навігація
+MainWindow.xaml(.cs)     # головне вікно та контейнер навігації
+
+Models/                  # доменні сутності та розрахунки предметної області
+Data/                    # AppDbContext, seed-ініціалізація та JSON-дані
+Infrastructure/          # шляхи до БД, логів і звітів у AppData
+Services/                # бізнес-логіка та інтеграції
+Services/Contracts/      # інтерфейси сервісів
+ViewModels/              # MVVM-стан і команди екранів
+Views/                   # WPF-сторінки та діалогові XAML-вікна
+Common/                  # базовий ViewModel і конвертери
+Resources/               # стилі, тема та Strings.uk-UA/en-US.xaml
+Properties/              # профіль запуску Visual Studio
+app.manifest             # маніфест Windows
 ```
 
-Усередині повинен бути:
+### Як працює застосунок
 
-```text
-DietPlanner.csproj
-DietPlanner.sln
-App.xaml
-MainWindow.xaml
-...
-```
+`App.OnStartup` реєструє залежності, створює локальну SQLite-базу через `AppDbContext`, запускає `DbInitializer`, а потім намагається відновити сесію. `NavigationService` перемикає WPF-сторінки (`AuthPage`, `DashboardPage`, `ProfilePage`, `CatalogPage`, `PlanGeneratorPage`, `StatisticsPage`, `UndoHistoryPage`, `AdminPage`) і прив'язує до них відповідні ViewModel.
 
-### 2. Відкрий solution
+Основні дані зберігаються через EF Core у сутностях `User`, `Product`, `Dish`, `NutritionPlan`, `MealIntake`, `ActionRecord` та пов'язаних моделях. `DbInitializer` створює схему через `EnsureCreatedAsync()` і додає початкові дані з `Data/categories.json`, `Data/products.json` та `Data/dishes.json`, якщо відповідні записи ще відсутні.
 
-Відкрий:
+Генератор планів у `Services/PlanService.cs` розраховує цільові калорії через `NutritionCalculator`, відкидає продукти та страви, що порушують обмеження користувача, розподіляє калорії між прийомами їжі й підбирає продукти/страви з обмеженням повторів. Результат зберігається як `NutritionPlan` з фіксованими харчовими значеннями на момент генерації.
 
-```text
-DietPlanner.sln
-```
+## Вимоги
 
-Якщо Visual Studio не хоче відкривати solution, відкрий напряму:
+- Windows із підтримкою WPF;
+- Visual Studio 2022 або новіша версія з workload **.NET desktop development**;
+- .NET 10 SDK;
+- доступ до інтернету потрібен лише для функції пошуку через Open Food Facts і перекладу запиту; основна робота застосунку л��кальна.
 
-```text
-DietPlanner.csproj
-```
-
-### 3. Дочекайся NuGet restore
-
-Visual Studio повинна підтягнути:
-
-```text
-Microsoft.WindowsAppSDK 2.5.1
-Microsoft.Windows.SDK.BuildTools 10.0.26100.9169
-CommunityToolkit.Mvvm 8.4.2
-EntityFrameworkCore.Sqlite 10.0.12
-...
-```
-
-### 4. Вибери x64
-
-У верхній панелі Visual Studio:
-
-```text
-Debug | x64
-```
-
-Не вибирай `Any CPU`.
-
-### 5. Вибери профіль запуску Unpackaged
-
-У dropdown біля кнопки запуску вибери:
-
-```text
-Unpackaged
-```
-
-Для unpackaged WinUI 3 це важливо: Microsoft окремо вказує, що при запуску з Visual Studio потрібно використовувати саме **Unpackaged launch profile**.
-
-### 6. Запусти
-
-Натисни:
-
-```text
-F5
-```
-
-або:
-
-```text
-Ctrl + F5
-```
-
-При першому запуску NuGet/Windows App SDK можуть трохи довше готуватися.
-
-## Запуск через PowerShell
-
-Після встановлення .NET SDK можна перевірити:
+Перевірити встановлений SDK можна так:
 
 ```powershell
 dotnet --version
 dotnet --info
 ```
 
-Потім перейти в папку проєкту:
+> У репозиторії немає автоматизованих тестів або CI-конфігурації, тому перед використанням рекомендується виконати локальну збірку й ручну перевірку основних сценаріїв.
+
+## Запуск у Visual Studio
+
+1. Клонуйте репозиторій і відкрийте `DietPlanner.sln`.
+2. Дочекайтеся відновлення NuGet-пакетів.
+3. Перевірте, що обрано Windows desktop workload.
+4. Запустіть проєкт профілем `Unpackaged` або натисніть **F5**.
 
 ```powershell
-cd C:\Projects\DietPlanner
-```
-
-Очистити та відновити пакети:
-
-```powershell
-dotnet nuget locals all --clear
+git clone https://github.com/Xydik1otto/DietPlaner_NoAi.git
+cd DietPlaner_NoAi
 dotnet restore .\DietPlanner.csproj
+dotnet build .\DietPlanner.csproj
+dotnet run --project .\DietPlanner.csproj
 ```
 
-Для цього проєкту основним способом запуску я рекомендую **Visual Studio → Unpackaged → F5**, а не ручний `dotnet run`, тому що WinUI 3 unpackaged запуск має додаткову Windows App SDK bootstrap/deployment логіку.
+Для WPF найнадійніший спосіб запуску — **Visual Studio → профіль `Unpackaged` → F5**. Якщо `dotnet run` не запускає desktop-вікно у вашому середовищі, використовуйте Visual Studio.
 
-## Якщо Build падає через Windows SDK
+## Дані та файли користувача
 
-Перевір, що встановлений SDK 26100.x.
-
-У Visual Studio Installer:
+Під час першого запуску база створюється автоматично. Робочі дані зберігаються у:
 
 ```text
-Modify
-→ Individual components
-→ Windows SDK
+%APPDATA%\DietPlanner\dietplanner.db
+%APPDATA%\DietPlanner\logs\
+%APPDATA%\DietPlanner\reports\
+%APPDATA%\DietPlanner\report.txt
 ```
 
-Проєкт зараз націлений на:
+Стартові JSON-файли копіюються у вихідну директорію під час збірки. Для повного перенесення локального профілю користувача скопіюйте каталог `%APPDATA%\DietPlanner` після завершення роботи застосунку.
 
-```xml
-<TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
-```
+## Налаштування й інтеграції
 
-Якщо на ПК немає SDK 26100, встанови його або зміни target framework на встановлену версію SDK.
+Окремий `.env` або файл секретів не потрібен. Open Food Facts і MyMemory викликаються напряму з клієнта через HTTPS; помилки мережі обробляються як відсутність результатів пошуку. Дані з зовнішнього каталогу перед збереженням потрібно перевіряти, оскільки їх повнота й точність залежать від Open Food Facts.
 
-## Якщо отримав помилку Developer Mode
+## Рекомендований сценарій першого запуску
 
-Windows Settings → System → Advanced → For developers → **Developer Mode = On**.
+1. Зареєструйте локальний облік��вий запис.
+2. Відкрийте **Профіль** і заповніть зріст, вагу, дату народження, стать, активність і ціль.
+3. Перевірте каталог та за потреби додайте власні продукти або страви.
+4. У **Генераторі плану** створіть план на день або тиждень.
+5. На **Dashboard** відмічайте прийоми їжі, воду та фактично з'їдені продукти.
+6. Переглядайте відхилення КБЖВ у статистиці та за потреби замінюйте елементи плану.
 
-Після встановлення/оновлення Visual Studio workload або Windows App SDK перезапусти Visual Studio.
+## Відомі технічні обмеження
 
-## Як виглядає ключова частина `.csproj`
+- схема БД створюється через `EnsureCreatedAsync`, а не через EF Core migrations;
+- у репозиторії відсутні unit/integration-тести та GitHub Actions;
+- генератор використовує евристики ролей продуктів і випадковість, тому меню є рекомендацією, а не медичною дієтою;
+- частина функцій, зокрема зовнішній пошук і експорт звітів, залежить від файлової системи та д��ступності зовнішніх сервісів;
+- локальна база й токен сесії зберігаються на комп'ютері користувача, тому резервне копіювання `%APPDATA%\DietPlanner` потрібно виконувати самостійно.
 
-```xml
-<PropertyGroup>
-  <OutputType>WinExe</OutputType>
-  <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
-  <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
-  <Platforms>x64</Platforms>
-  <PlatformTarget>x64</PlatformTarget>
-  <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-  <WindowsPackageType>None</WindowsPackageType>
-  <ApplicationManifest>app.manifest</ApplicationManifest>
-  <Nullable>enable</Nullable>
-  <ImplicitUsings>enable</ImplicitUsings>
-</PropertyGroup>
-```
+## Ліцензія
 
-і:
-
-```xml
-<PackageReference Include="Microsoft.WindowsAppSDK" Version="2.5.1" />
-<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.9169" />
-```
-
-## Якщо щось не запускається
-
-Найперше надішли мені **повний текст першої помилки з Error List / Output**, а не тільки червоний рядок. Для WinUI 3 це важливо, бо помилка часто виникає ще під час генерації XAML або restore, а не в самому UI.
-
-## Перевірка цього архіву
-
-У поточному середовищі Windows/.NET Desktop toolchain недоступний, тому реальний WinUI build на Windows тут не виконувався.
-
-Перед упаковкою було виконано статичну перевірку:
-
-- XAML-файли коректно парсяться як XML;
-- WPF namespace/API-релікти у `.cs` та `.xaml` відсутні;
-- `DataGrid`, `WrapPanel`, `UniformGrid`, `DynamicResource`, `UpdateSourceTrigger` та WPF `RelativeSource` видалені;
-- перевірено `Grid.Column` без відповідних `ColumnDefinitions`;
-- `bin/` і `obj/` у пакет не включені.
-](https://github.com/Xydik1otto/DietPlaner_NoAi)](https://github.com/Xydik1otto/DietPlaner_NoAi)](https://github.com/Xydik1otto/DietPlaner_NoAi)
+У репозиторії наразі немає файлу `LICENSE`. Якщо проєкт планується до публічного використання або внесків інших розробників, додайте ліцензію та зафіксуйте правила внесення змін.
