@@ -214,3 +214,4 @@ Windows Settings → System → Advanced → For developers → **Developer Mode
 - `DataGrid`, `WrapPanel`, `UniformGrid`, `DynamicResource`, `UpdateSourceTrigger` та WPF `RelativeSource` видалені;
 - перевірено `Grid.Column` без відповідних `ColumnDefinitions`;
 - `bin/` і `obj/` у пакет не включені.
+](https://github.com/Xydik1otto/DietPlaner_NoAi)](https://github.com/Xydik1otto/DietPlaner_NoAi)](https://github.com/Xydik1otto/DietPlaner_NoAi)
