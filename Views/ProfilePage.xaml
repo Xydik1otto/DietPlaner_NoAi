@@ -1,0 +1,131 @@
+<Page x:Class="DietPlanner.Views.ProfilePage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="{DynamicResource Nav_Profile}">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <Border Padding="{StaticResource PagePadding}" MaxWidth="960" HorizontalAlignment="Left">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0">
+                    <TextBlock Text="{DynamicResource Prof_Title}" Style="{StaticResource PageTitleTextStyle}" />
+                    <TextBlock Text="Основна інформація, параметри розрахунку та дієтичні обмеження." Style="{StaticResource PageSubtitleTextStyle}" Margin="0,4,0,0" />
+                </StackPanel>
+
+                <!-- Статус облікового запису -->
+                <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="0,20,0,12">
+                    <WrapPanel Margin="-8">
+                        <StackPanel Width="280" Margin="8">
+                            <TextBlock Text="Ваш обліковий запис" Style="{StaticResource SectionTitleTextStyle}" />
+                            <TextBlock Text="{DynamicResource Prof_CurrentEmail}" Style="{StaticResource LabelTextStyle}" Margin="0,10,0,2" />
+                            <TextBlock Text="{Binding Email}" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                        </StackPanel>
+                        <StackPanel Width="280" Margin="8">
+                            <TextBlock Text="Статус профілю" Style="{StaticResource SectionTitleTextStyle}" />
+                            <TextBlock Text="{Binding StatusMessage}" Foreground="{StaticResource AccentBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,10,0,0" />
+                        </StackPanel>
+                    </WrapPanel>
+                </Border>
+
+                <!-- Персональні параметри (Вирівняна сітка) -->
+                <Border Grid.Row="2" Style="{StaticResource CardStyle}" Margin="0,0,0,12">
+                    <StackPanel>
+                        <TextBlock Text="Персональні параметри" Style="{StaticResource SectionTitleTextStyle}" />
+                        
+                        <Grid Margin="0,16,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" MaxWidth="320"/>
+                                <ColumnDefinition Width="20"/>
+                                <ColumnDefinition Width="*" MaxWidth="320"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Рядок 1: Ім'я | Зріст і Вага -->
+                            <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,0,14">
+                                <TextBlock Text="{DynamicResource Prof_DisplayName}" Style="{StaticResource LabelTextStyle}" />
+                                <TextBox Text="{Binding DisplayName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBoxStyle}" />
+                            </StackPanel>
+
+                            <Grid Grid.Row="0" Grid.Column="2" Margin="0,0,0,14">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="10"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="{DynamicResource Prof_Height}" Style="{StaticResource LabelTextStyle}" />
+                                    <TextBox Text="{Binding HeightCm, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBoxStyle}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="{DynamicResource Prof_Weight}" Style="{StaticResource LabelTextStyle}" />
+                                    <TextBox Text="{Binding WeightKg, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBoxStyle}" />
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Рядок 2: Дата народження | Рівень активності -->
+                            <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,0,14">
+                                <TextBlock Text="{DynamicResource Prof_BirthDate}" Style="{StaticResource LabelTextStyle}" />
+                                <DatePicker SelectedDate="{Binding BirthDate, Mode=TwoWay}" HorizontalAlignment="Stretch" Style="{StaticResource AppDatePickerStyle}" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,0,0,14">
+                                <TextBlock Text="{DynamicResource Prof_Activity}" Style="{StaticResource LabelTextStyle}" />
+                                <ComboBox ItemsSource="{Binding ActivityLevels}" SelectedItem="{Binding ActivityLevel}" Style="{StaticResource AppComboBoxStyle}" />
+                            </StackPanel>
+
+                            <!-- Рядок 3: Стать | Ціль харчування -->
+                            <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,0,0">
+                                <TextBlock Text="{DynamicResource Prof_Sex}" Style="{StaticResource LabelTextStyle}" />
+                                <ComboBox ItemsSource="{Binding Sexes}" SelectedItem="{Binding Sex}" Style="{StaticResource AppComboBoxStyle}" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="2" Grid.Column="2" Margin="0,0,0,0">
+                                <TextBlock Text="{DynamicResource Prof_Goal}" Style="{StaticResource LabelTextStyle}" />
+                                <ComboBox ItemsSource="{Binding NutritionGoals}" SelectedItem="{Binding Goal}" Style="{StaticResource AppComboBoxStyle}" />
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Дієтичні обмеження -->
+                <Border Grid.Row="3" Style="{StaticResource CardStyle}" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="{DynamicResource Prof_Restrictions}" Style="{StaticResource SectionTitleTextStyle}" />
+                        <TextBlock Text="Познач обмеження, які мають враховуватися під час формування раціону." Style="{StaticResource PageSubtitleTextStyle}" Margin="0,4,0,12" TextWrapping="Wrap" />
+                        
+                        <ItemsControl ItemsSource="{Binding Restrictions}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{StaticResource SurfaceSubtleBrush}" CornerRadius="10" Padding="12" Margin="0,0,0,8">
+                                        <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" VerticalContentAlignment="Center">
+                                            <StackPanel Margin="6,0,0,0">
+                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" FontSize="13" />
+                                                <TextBlock Text="{Binding Description}" Style="{StaticResource CaptionTextStyle}" TextWrapping="Wrap" Margin="0,2,0,0" />
+                                            </StackPanel>
+                                        </CheckBox>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <StackPanel Grid.Row="4" Orientation="Horizontal">
+                    <Button Content="{DynamicResource Prof_SaveProfile}" Command="{Binding SaveCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" />
+                    <Button Content="{DynamicResource Btn_Back}" Command="{Binding BackCommand}" Style="{StaticResource SecondaryButtonStyle}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </ScrollViewer>
+</Page>

@@ -1,0 +1,91 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+
+    <!-- Navigation & Common -->
+    <sys:String x:Key="App_Title">DietPlanner - Nutrition Planner</sys:String>
+    <sys:String x:Key="Nav_Dashboard">Dashboard</sys:String>
+    <sys:String x:Key="Nav_Catalog">Catalog</sys:String>
+    <sys:String x:Key="Nav_PlanGenerator">Meal Generator</sys:String>
+    <sys:String x:Key="Nav_Profile">Profile</sys:String>
+    <sys:String x:Key="Nav_Admin">Admin Panel</sys:String>
+    <sys:String x:Key="Nav_UndoHistory">Action History</sys:String>
+    <sys:String x:Key="Nav_Logout">Logout</sys:String>
+    <sys:String x:Key="Nav_Language">Interface Language:</sys:String>
+
+    <!-- Common Buttons -->
+    <sys:String x:Key="Btn_Cancel">Cancel</sys:String>
+    <sys:String x:Key="Btn_Save">Save</sys:String>
+    <sys:String x:Key="Btn_Delete">Delete</sys:String>
+    <sys:String x:Key="Btn_Edit">Edit</sys:String>
+    <sys:String x:Key="Btn_Back">Back</sys:String>
+    <sys:String x:Key="Btn_Search">Search</sys:String>
+    <sys:String x:Key="Btn_Confirm">Confirm</sys:String>
+
+    <!-- Dashboard -->
+    <sys:String x:Key="Dash_Title">Dashboard</sys:String>
+    <sys:String x:Key="Dash_Calories">Calories</sys:String>
+    <sys:String x:Key="Dash_Proteins">Proteins</sys:String>
+    <sys:String x:Key="Dash_Fats">Fats</sys:String>
+    <sys:String x:Key="Dash_Carbs">Carbs</sys:String>
+    <sys:String x:Key="Dash_AddMeal">+ Add Meal Intake</sys:String>
+    <sys:String x:Key="Dash_SuggestMeal">What should I eat now?</sys:String>
+    <sys:String x:Key="Dash_ExportReport">Export Report (.txt)</sys:String>
+    <sys:String x:Key="Dash_Undo">Undo Last Action</sys:String>
+    <sys:String x:Key="Dash_Time">Time</sys:String>
+    <sys:String x:Key="Dash_ItemName">Product/Dish Name</sys:String>
+    <sys:String x:Key="Dash_Weight">Amount (g)</sys:String>
+    <sys:String x:Key="Dash_MacrosSummary">P / F / C</sys:String>
+    <sys:String x:Key="Dash_DialogTitle">Add Meal Intake</sys:String>
+    <sys:String x:Key="Dash_SelectFood">Select product or dish:</sys:String>
+    <sys:String x:Key="Dash_EnterGrams">Weight / Portion (in grams):</sys:String>
+
+    <!-- Catalog -->
+    <sys:String x:Key="Cat_Title">Product &amp; Dish Catalog</sys:String>
+    <sys:String x:Key="Cat_AddProduct">+ Add Product</sys:String>
+    <sys:String x:Key="Cat_AddDish">+ Create Dish</sys:String>
+    <sys:String x:Key="Cat_EditSelected">Edit Selected</sys:String>
+    <sys:String x:Key="Cat_DeleteSelected">Delete Selected</sys:String>
+    <sys:String x:Key="Cat_IncludeDishes">Include Dishes</sys:String>
+    <sys:String x:Key="Cat_Category">Category</sys:String>
+    <sys:String x:Key="Cat_Name">Name</sys:String>
+    <sys:String x:Key="Cat_Calories">Calories (kcal)</sys:String>
+    <sys:String x:Key="Cat_Proteins">Proteins (g)</sys:String>
+    <sys:String x:Key="Cat_Fats">Fats (g)</sys:String>
+    <sys:String x:Key="Cat_Carbs">Carbs (g)</sys:String>
+    <sys:String x:Key="Cat_ProductDialogTitle">Create / Edit Product</sys:String>
+    <sys:String x:Key="Cat_DishDialogTitle">Create / Edit Dish</sys:String>
+
+    <!-- Meal Generator & Plan History -->
+    <sys:String x:Key="Plan_Title">Meal Plan Generator</sys:String>
+    <sys:String x:Key="Plan_Params">Generation Parameters</sys:String>
+    <sys:String x:Key="Plan_MealCount">Number of Meals (3-6):</sys:String>
+    <sys:String x:Key="Plan_CalorieGoal">Calorie Goal:</sys:String>
+    <sys:String x:Key="Plan_GenerateBtn">Generate New Plan</sys:String>
+    <sys:String x:Key="Plan_HistoryGroup">Saved Plan History</sys:String>
+    <sys:String x:Key="Plan_SelectHistory">Select plan from history:</sys:String>
+    <sys:String x:Key="Plan_SlotName">Meal Slot</sys:String>
+    <sys:String x:Key="Plan_SuggestedFood">Suggested Dish/Product</sys:String>
+
+    <!-- Profile -->
+    <sys:String x:Key="Prof_Title">User Profile</sys:String>
+    <sys:String x:Key="Prof_CurrentEmail">Current Email:</sys:String>
+    <sys:String x:Key="Prof_DisplayName">Display Name:</sys:String>
+    <sys:String x:Key="Prof_BirthDate">Birth Date:</sys:String>
+    <sys:String x:Key="Prof_Height">Height (cm):</sys:String>
+    <sys:String x:Key="Prof_Weight">Weight (kg):</sys:String>
+    <sys:String x:Key="Prof_Sex">Sex:</sys:String>
+    <sys:String x:Key="Prof_Activity">Activity Level:</sys:String>
+    <sys:String x:Key="Prof_Goal">Nutrition Goal:</sys:String>
+    <sys:String x:Key="Prof_Restrictions">Dietary Restrictions &amp; Allergens</sys:String>
+    <sys:String x:Key="Prof_SaveProfile">Save Profile &amp; Restrictions</sys:String>
+
+    <!-- Admin Panel -->
+    <sys:String x:Key="Admin_Title">Admin Panel</sys:String>
+    <sys:String x:Key="Admin_UsersTab">User Management</sys:String>
+    <sys:String x:Key="Admin_LogsTab">System Logs</sys:String>
+    <sys:String x:Key="Admin_RefreshList">Refresh List</sys:String>
+    <sys:String x:Key="Admin_ChangeRole">Change Role</sys:String>
+    <sys:String x:Key="Admin_RegDate">Registration Date</sys:String>
+
+</ResourceDictionary>

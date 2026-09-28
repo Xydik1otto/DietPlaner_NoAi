@@ -1,0 +1,180 @@
+<Page x:Class="DietPlanner.Views.CatalogPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="{DynamicResource Nav_Catalog}">
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Заголовок -->
+        <TextBlock Grid.Row="0" Text="{DynamicResource Cat_Title}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,16"/>
+
+        <!-- Панель дій -->
+        <WrapPanel Grid.Row="1" Margin="0,0,0,12">
+            <Button Content="🌐 Пошук в API" Command="{Binding OpenApiSearchDialogCommand}" Background="#7C3AED" Foreground="White" Margin="0,0,8,8"/>
+            <Button Content="+ Категорія" Command="{Binding OpenAddCategoryDialogCommand}" Background="#D97706" Foreground="White" Margin="0,0,8,8"/>
+            <Button Content="{DynamicResource Cat_AddProduct}" Command="{Binding OpenAddProductDialogCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,8"/>
+            <Button Content="{DynamicResource Cat_AddDish}" Command="{Binding OpenAddDishDialogCommand}" Background="#2563EB" Foreground="White" Margin="0,0,8,8"/>
+            <Button Content="{DynamicResource Cat_EditSelected}" Command="{Binding OpenEditProductDialogCommand}" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,8"/>
+            <Button Content="{DynamicResource Cat_DeleteSelected}" Command="{Binding DeleteSelectedItemCommand}" Background="#DC2626" Foreground="White" Margin="0,0,8,8"/>
+            <Button Content="✕ Всі" Command="{Binding ApplyFiltersAndSearchCommand}" Click="ResetCategory_Click" Padding="8,4" Margin="0,4,10,4" Style="{StaticResource SecondaryButtonStyle}"/>
+        </WrapPanel>
+
+        <!-- Панель фільтрів -->
+        <Border Grid.Row="2" Style="{StaticResource CardBorderStyle}" Padding="12" Margin="0,0,0,16">
+            <WrapPanel VerticalAlignment="Center">
+                <TextBox Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}" Width="180" Margin="0,4,10,4"/>
+                <ComboBox ItemsSource="{Binding FilterCategories}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedCategory}" Width="180" Margin="0,4,10,4"/>
+                <ComboBox ItemsSource="{Binding SortOptions}" SelectedItem="{Binding SelectedSortOption}" Width="170" Margin="0,4,10,4"/>
+                <CheckBox Content="{DynamicResource Cat_IncludeDishes}" IsChecked="{Binding IncludeDishes}" VerticalAlignment="Center" Margin="0,4,14,4" FontWeight="Medium"/>
+                <Button Content="{DynamicResource Btn_Search}" Command="{Binding ApplyFiltersAndSearchCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,4,0,4"/>
+            </WrapPanel>
+        </Border>
+
+        <!-- Таблиця даних -->
+        <Border Grid.Row="3" Style="{StaticResource CardBorderStyle}" Padding="0">
+            <DataGrid ItemsSource="{Binding FilteredItems}" SelectedItem="{Binding SelectedItem}" AutoGenerateColumns="False" IsReadOnly="True">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="{DynamicResource Cat_Name}" Binding="{Binding Name}" Width="*"/>
+                    <DataGridTextColumn Header="{DynamicResource Cat_Category}" Binding="{Binding CategoryName}" Width="160"/>
+                    <DataGridTextColumn Header="{DynamicResource Cat_Calories}" Binding="{Binding Calories, StringFormat={}{0:F0}}" Width="110"/>
+                    <DataGridTextColumn Header="{DynamicResource Cat_Proteins}" Binding="{Binding Proteins, StringFormat={}{0:F1}}" Width="90"/>
+                    <DataGridTextColumn Header="{DynamicResource Cat_Fats}" Binding="{Binding Fats, StringFormat={}{0:F1}}" Width="90"/>
+                    <DataGridTextColumn Header="{DynamicResource Cat_Carbs}" Binding="{Binding Carbs, StringFormat={}{0:F1}}" Width="90"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+
+        <!-- МОДАЛЬНІ ВІКНА -->
+        <!-- 1. Вікно категорії -->
+        <Grid Grid.RowSpan="4" Background="#50000000" Visibility="{Binding IsCategoryDialogOpen, Converter={StaticResource BoolToVisibilityConverter}}">
+            <Border Background="White" CornerRadius="14" Padding="24" Width="400" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <StackPanel>
+                    <TextBlock Text="Створення нової категорії" FontSize="18" FontWeight="Bold" Margin="0,0,0,14"/>
+                    <TextBlock Text="Назва категорії:" FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                    <TextBox Text="{Binding NewCategoryName, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,12"/>
+                    <TextBlock Text="Опис (необов'язково):" FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                    <TextBox Text="{Binding NewCategoryDescription, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,18"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="{DynamicResource Btn_Cancel}" Command="{Binding CloseCategoryDialogCommand}" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0"/>
+                        <Button Content="{DynamicResource Btn_Save}" Command="{Binding SaveCategoryCommand}" Style="{StaticResource PrimaryButtonStyle}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- 2. Вікно продукту -->
+        <Grid Grid.RowSpan="4" Background="#50000000" Visibility="{Binding IsProductDialogOpen, Converter={StaticResource BoolToVisibilityConverter}}">
+            <Border Background="White" CornerRadius="14" Padding="24" Width="500" MaxWidth="560" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="16">
+                <ScrollViewer MaxHeight="520" VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock Text="{DynamicResource Cat_ProductDialogTitle}" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,14"/>
+
+                        <TextBlock Text="{DynamicResource Cat_Name}" FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                        <TextBox Text="{Binding ProductName, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,10"/>
+
+                        <TextBlock Text="{DynamicResource Cat_Category}" FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                        <ComboBox ItemsSource="{Binding Categories}" DisplayMemberPath="Name" SelectedItem="{Binding ProductSelectedCategory}" Margin="0,4,0,10"/>
+
+                        <TextBlock Text="Опис:" FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                        <TextBox Text="{Binding ProductDescription, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,10"/>
+
+                        <WrapPanel Margin="0,0,0,10">
+                            <StackPanel Width="220" Margin="0,0,10,8">
+                                <TextBlock Text="База вимірювання:" FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                                <ComboBox ItemsSource="{Binding NutritionBases}" SelectedItem="{Binding ProductBasis}" Margin="0,4,0,0"/>
+                            </StackPanel>
+                            <StackPanel Width="220" Margin="0,0,0,8">
+                                <TextBlock Text="Порція (г/мл/шт):" FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                                <TextBox Text="{Binding ProductReferenceAmount, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </WrapPanel>
+
+                        <UniformGrid Columns="4" Margin="0,0,0,12">
+                            <StackPanel Margin="2">
+                                <TextBlock Text="Ккал:" FontSize="11" Foreground="{StaticResource TextMutedBrush}"/>
+                                <TextBox Text="{Binding ProductCalories, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <StackPanel Margin="2">
+                                <TextBlock Text="Білки:" FontSize="11" Foreground="{StaticResource TextMutedBrush}"/>
+                                <TextBox Text="{Binding ProductProteins, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <StackPanel Margin="2">
+                                <TextBlock Text="Жири:" FontSize="11" Foreground="{StaticResource TextMutedBrush}"/>
+                                <TextBox Text="{Binding ProductFats, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <StackPanel Margin="2">
+                                <TextBlock Text="Вуглеводи:" FontSize="11" Foreground="{StaticResource TextMutedBrush}"/>
+                                <TextBox Text="{Binding ProductCarbs, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,0"/>
+                            </StackPanel>
+                        </UniformGrid>
+
+                        <TextBlock Text="Алергени (через кому):" FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                        <TextBox Text="{Binding ProductAllergens, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,10"/>
+
+                        <TextBlock Text="Дієтичні теги (через кому):" FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                        <TextBox Text="{Binding ProductDietaryTags, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,18"/>
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Content="{DynamicResource Btn_Cancel}" Command="{Binding CloseProductDialogCommand}" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0"/>
+                            <Button Content="{DynamicResource Btn_Save}" Command="{Binding SaveProductCommand}" Style="{StaticResource PrimaryButtonStyle}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+
+        <!-- 3. Вікно створення страви -->
+        <Grid Grid.RowSpan="4" Background="#50000000" Visibility="{Binding IsDishDialogOpen, Converter={StaticResource BoolToVisibilityConverter}}">
+            <Border Background="White" CornerRadius="14" Padding="24" Width="500" MaxWidth="560" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="16">
+                <ScrollViewer MaxHeight="520" VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock Text="{DynamicResource Cat_DishDialogTitle}" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,14"/>
+
+                        <TextBlock Text="Назва страви:" FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                        <TextBox Text="{Binding DishName, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,10"/>
+
+                        <TextBlock Text="{DynamicResource Cat_Category}" FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                        <ComboBox ItemsSource="{Binding Categories}" DisplayMemberPath="Name" SelectedItem="{Binding DishSelectedCategory}" Margin="0,4,0,12"/>
+
+                        <Border Background="#F7F9F8" CornerRadius="10" Padding="12" Margin="0,0,0,14" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="Інгредієнти страви (за грамажем)" FontWeight="Bold" Margin="0,0,0,8"/>
+                                <WrapPanel Margin="0,0,0,8">
+                                    <ComboBox ItemsSource="{Binding AvailableProducts}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedIngredientProduct}" Width="200" Margin="0,0,6,6"/>
+                                    <TextBox Text="{Binding IngredientAmount, UpdateSourceTrigger=PropertyChanged}" Width="80" Margin="0,0,6,6"/>
+                                    <Button Content="+ Додати" Command="{Binding AddDishIngredientCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,0,6"/>
+                                </WrapPanel>
+
+                                <DataGrid ItemsSource="{Binding DishIngredients}" AutoGenerateColumns="False" IsReadOnly="True" MaxHeight="150" Background="Transparent" BorderThickness="0">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Продукт" Binding="{Binding ProductName}" Width="*"/>
+                                        <DataGridTextColumn Header="Маса (г)" Binding="{Binding Amount}" Width="90"/>
+                                        <DataGridTemplateColumn Width="45">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <Button Content="✕" Command="{Binding DataContext.RemoveDishIngredientCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Foreground="#DC2626" FontWeight="Bold" Background="Transparent" BorderThickness="0" Cursor="Hand"/>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </Border>
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Content="{DynamicResource Btn_Cancel}" Command="{Binding CloseDishDialogCommand}" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0"/>
+                            <Button Content="{DynamicResource Btn_Save}" Command="{Binding SaveDishCommand}" Style="{StaticResource PrimaryButtonStyle}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+
+    </Grid>
+</Page>
