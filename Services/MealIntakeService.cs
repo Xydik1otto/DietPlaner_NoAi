@@ -12,24 +12,27 @@ public class MealIntakeService : IMealIntakeService
     private readonly INutritionCalculator _calculator;
     private readonly IRestrictionService _restrictionService;
     private readonly ILoggingService _logging;
+    private readonly ILocalizationService _loc;
 
     public MealIntakeService(
         IDbContextFactory<AppDbContext> dbContextFactory,
         INutritionCalculator calculator,
         IRestrictionService restrictionService,
-        ILoggingService logging)
+        ILoggingService logging,
+        ILocalizationService loc)
     {
         _dbContextFactory = dbContextFactory;
         _calculator = calculator;
         _restrictionService = restrictionService;
         _logging = logging;
+        _loc = loc;
     }
 
     public async Task AddIntakeItemAsync(Guid userId, Guid? productId, Guid? dishId, decimal amountGrams, CancellationToken cancellationToken = default)
     {
         await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
 
-        string itemName = "Прийом їжі";
+        string itemName = _loc.GetString("Meal_DefaultName");
         NutritionSnapshot nutrition = new(0m, 0m, 0m, 0m);
 
         if (productId.HasValue)
@@ -71,7 +74,7 @@ public class MealIntakeService : IMealIntakeService
         Guid intakeId;
         if (!existingIntakeId.HasValue)
         {
-            var newIntake = new MealIntake(userId, DateTime.UtcNow, MealType.Snack, "Прийом їжі");
+            var newIntake = new MealIntake(userId, DateTime.UtcNow, MealType.Snack, _loc.GetString("Meal_DefaultName"));
             db.MealIntakes.Add(newIntake);
             await db.SaveChangesAsync(cancellationToken);
             intakeId = newIntake.Id;
@@ -81,7 +84,7 @@ public class MealIntakeService : IMealIntakeService
             intakeId = existingIntakeId.Value;
         }
 
-        var item = new MealIntakeItem(MealEntrySource.Manual, productId, dishId, itemName, amountGrams, "г", nutrition);
+        var item = new MealIntakeItem(MealEntrySource.Manual, productId, dishId, itemName, amountGrams, _loc.GetString("Unit_Grams"), nutrition);
         db.Entry(item).Property("MealIntakeId").CurrentValue = intakeId;
         
         db.MealIntakeItems.Add(item);
@@ -90,7 +93,7 @@ public class MealIntakeService : IMealIntakeService
         await _logging.LogActionAsync(
             userId,
             ActionType.Create,
-            $"Додано прийом їжі / позначку «З'їв»: {itemName} ({amountGrams:F0}г, {nutrition.Calories:F0} ккал).",
+            $"Added intake item: {itemName} ({amountGrams:F0}g, {nutrition.Calories:F0} kcal).",
             entityName: nameof(MealIntakeItem),
             entityId: item.Id,
             cancellationToken: cancellationToken);
@@ -122,7 +125,7 @@ public class MealIntakeService : IMealIntakeService
                 await _logging.LogActionAsync(
                     userId,
                     ActionType.Delete,
-                    $"Скасовано позначку «З'їв» для: {itemToRemove.ItemName} ({itemToRemove.Amount:F0}г).",
+                    $"Removed intake item: {itemToRemove.ItemName} ({itemToRemove.Amount:F0}g).",
                     entityName: nameof(MealIntakeItem),
                     entityId: itemToRemove.Id,
                     cancellationToken: cancellationToken);
@@ -163,7 +166,6 @@ public class MealIntakeService : IMealIntakeService
 
         var candidates = new List<(FoodItemDisplayDto Dto, double Score)>();
 
-        // 1. Продукти з каталогу
         var products = await db.Products.AsNoTracking()
             .Include(p => p.Category)
             .Where(p => p.IsActive)
@@ -190,8 +192,8 @@ public class MealIntakeService : IMealIntakeService
             candidates.Add((new FoodItemDisplayDto
             {
                 Id = p.Id,
-                Name = $"{p.Name} (~{portionGrams:F0}г)",
-                CategoryName = p.Category?.Name ?? "Продукт",
+                Name = $"{p.Name} (~{portionGrams:F0}{_loc.GetString("Unit_Grams")})",
+                CategoryName = p.Category?.Name ?? _loc.GetString("Meal_ProductCategoryDefault"),
                 Calories = itemCalories,
                 Proteins = itemProteins,
                 Fats = ((double)p.FatG / 100.0) * portionGrams,
@@ -200,7 +202,6 @@ public class MealIntakeService : IMealIntakeService
             }, score));
         }
 
-        // 2. Страви з каталогу
         var dishes = await db.Dishes.AsNoTracking()
             .Include(d => d.Category)
             .Include(d => d.Ingredients)
@@ -233,8 +234,8 @@ public class MealIntakeService : IMealIntakeService
             candidates.Add((new FoodItemDisplayDto
             {
                 Id = d.Id,
-                Name = $"[Страва] {d.Name} (~{portionGrams:F0}г)",
-                CategoryName = d.Category?.Name ?? "Страва",
+                Name = $"[{_loc.GetString("Meal_DishCategoryDefault")}] {d.Name} (~{portionGrams:F0}{_loc.GetString("Unit_Grams")})",
+                CategoryName = d.Category?.Name ?? _loc.GetString("Meal_DishCategoryDefault"),
                 Calories = itemCalories,
                 Proteins = itemProteins,
                 Fats = (double)baseNutr.FatG * portionMultiplier,
@@ -256,7 +257,6 @@ public class MealIntakeService : IMealIntakeService
         
         var today = DateTime.UtcNow.Date;
 
-        // 1. Отримуємо всі раціони за минулі дні з завантаженими продуктами та стравами
         var pastPlans = await db.NutritionPlans
             .Include(p => p.Items)
                 .ThenInclude(i => i.Product)
@@ -267,7 +267,6 @@ public class MealIntakeService : IMealIntakeService
 
         if (pastPlans.Count == 0) return;
 
-        // 2. Отримуємо вже збережені прийоми їжі з елементами за минулий період
         var pastIntakes = await db.MealIntakes
             .Include(i => i.Items)
             .Where(i => i.UserId == userId && i.ConsumedAtUtc.Date < today)
@@ -279,7 +278,6 @@ public class MealIntakeService : IMealIntakeService
         {
             var planDate = plan.PlanDate.Date;
 
-            // Знаходимо або створюємо сесію MealIntake для відповідної дати
             var dayIntake = pastIntakes.FirstOrDefault(i => i.ConsumedAtUtc.Date == planDate);
             if (dayIntake == null)
             {
@@ -287,7 +285,7 @@ public class MealIntakeService : IMealIntakeService
                     userId, 
                     DateTime.SpecifyKind(planDate.AddHours(12), DateTimeKind.Utc), 
                     MealType.Snack, 
-                    "Автофіксація раціону");
+                    _loc.GetString("Meal_AutoFixPlan"));
                 db.MealIntakes.Add(dayIntake);
                 await db.SaveChangesAsync(cancellationToken);
                 pastIntakes.Add(dayIntake);
@@ -299,7 +297,6 @@ public class MealIntakeService : IMealIntakeService
 
                 var itemName = item.Product?.Name ?? item.Dish?.Name ?? item.MealName;
 
-                // Перевіряємо, чи цей елемент вже зафіксований
                 bool isAlreadyInDb = dayIntake.Items.Any(i => 
                     (item.ProductId.HasValue && i.ProductId == item.ProductId.Value) ||
                     (item.DishId.HasValue && i.DishId == item.DishId.Value) ||
@@ -315,7 +312,7 @@ public class MealIntakeService : IMealIntakeService
                         item.DishId,
                         itemName,
                         item.PortionAmount,
-                        "г",
+                        _loc.GetString("Unit_Grams"),
                         snapshot);
 
                     db.Entry(newItem).Property("MealIntakeId").CurrentValue = dayIntake.Id;
@@ -333,7 +330,7 @@ public class MealIntakeService : IMealIntakeService
             await _logging.LogActionAsync(
                 userId,
                 ActionType.Create,
-                $"Автоматично зафіксовано {newItemsCount} фактично з'їдених страв за минулі дні в статистику.",
+                $"Auto-synced {newItemsCount} items from past plans.",
                 entityName: nameof(MealIntakeItem),
                 cancellationToken: cancellationToken);
         }
@@ -367,7 +364,7 @@ public class MealIntakeService : IMealIntakeService
                     Proteins = (double)item.ProteinG,
                     Fats = (double)item.FatG,
                     Carbs = (double)item.CarbsG,
-                    NutritionSummary = $"Б:{item.ProteinG:F1}г / Ж:{item.FatG:F1}г / В:{item.CarbsG:F1}г"
+                    NutritionSummary = string.Format(_loc.GetString("Meal_MacrosSummary"), item.ProteinG, item.FatG, item.CarbsG)
                 });
             }
         }
@@ -387,7 +384,7 @@ public class MealIntakeService : IMealIntakeService
             await _logging.LogActionAsync(
                 userId,
                 ActionType.Delete,
-                $"Видалено з записів прийому їжі: {item.ItemName} ({item.Amount:F0}г).",
+                $"Deleted intake item: {item.ItemName} ({item.Amount:F0}g).",
                 entityName: nameof(MealIntakeItem),
                 entityId: item.Id,
                 cancellationToken: cancellationToken);
@@ -436,7 +433,7 @@ public class MealIntakeService : IMealIntakeService
         await _logging.LogActionAsync(
             userId,
             ActionType.Update,
-            $"Змінено порцію прийому їжі: {item.ItemName} до {newAmountGrams:F0}г.",
+            $"Updated intake portion: {item.ItemName} to {newAmountGrams:F0}g.",
             entityName: nameof(MealIntakeItem),
             entityId: item.Id,
             cancellationToken: cancellationToken);

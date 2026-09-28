@@ -3,7 +3,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DietPlanner.Common;
 using DietPlanner.Data;
-using DietPlanner.Models;
 using DietPlanner.Services.Contracts;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,6 +21,7 @@ public partial class UndoHistoryViewModel : ViewModelBase
     private readonly IDbContextFactory<AppDbContext> _dbFactory;
     private readonly IAuthenticationService _auth;
     private readonly IUndoService _undoService;
+    private readonly ILocalizationService _loc;
 
     [ObservableProperty] private ObservableCollection<ActionRecordDisplayDto> _historyItems = new();
     [ObservableProperty] private string _statusMessage = string.Empty;
@@ -29,11 +29,13 @@ public partial class UndoHistoryViewModel : ViewModelBase
     public UndoHistoryViewModel(
         IDbContextFactory<AppDbContext> dbFactory,
         IAuthenticationService auth,
-        IUndoService undoService)
+        IUndoService undoService,
+        ILocalizationService loc)
     {
         _dbFactory = dbFactory;
         _auth = auth;
         _undoService = undoService;
+        _loc = loc;
     }
 
     [RelayCommand]
@@ -56,7 +58,7 @@ public partial class UndoHistoryViewModel : ViewModelBase
             Timestamp = r.CreatedAtUtc.ToLocalTime(),
             ActionType = r.ActionType.ToString(),
             Description = r.Description,
-            EntityName = string.IsNullOrWhiteSpace(r.EntityName) ? "Загальне" : r.EntityName
+            EntityName = string.IsNullOrWhiteSpace(r.EntityName) ? _loc.GetString("Undo_GeneralEntity") : r.EntityName
         }).ToList();
 
         HistoryItems = new ObservableCollection<ActionRecordDisplayDto>(dtos);
@@ -69,7 +71,7 @@ public partial class UndoHistoryViewModel : ViewModelBase
         if (user == null) return;
 
         await _undoService.UndoLastActionAsync();
-        StatusMessage = "Останню дію успішно скасовано.";
+        StatusMessage = _loc.GetString("Undo_SuccessMessage");
         await LoadHistoryAsync(cancellationToken);
     }
 }

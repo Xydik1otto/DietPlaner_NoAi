@@ -5,6 +5,8 @@ namespace DietPlanner.Services;
 
 public sealed class NutritionCalculator : INutritionCalculator
 {
+    private readonly ILocalizationService _loc;
+
     private static readonly IReadOnlyDictionary<ActivityLevel, decimal> ActivityFactors =
         new Dictionary<ActivityLevel, decimal>
         {
@@ -19,21 +21,25 @@ public sealed class NutritionCalculator : INutritionCalculator
     private const decimal DefaultFatPercent = 25m;
     private const decimal DefaultCarbsPercent = 45m;
 
+    public NutritionCalculator(ILocalizationService loc)
+    {
+        _loc = loc;
+    }
+
     public NutritionCalculation Calculate(User user)
     {
         if (user.BirthDate is null || user.SexForCalculation is null || user.HeightCm is null || user.WeightKg is null || user.ActivityLevel is null || user.Goal is null)
-            throw new InvalidOperationException("Заповніть дату народження, стать, зріст, масу, активність та ціль у профілі.");
+            throw new InvalidOperationException(_loc.GetString("Err_FillProfileCalc"));
 
         var age = CalculateAge(user.BirthDate.Value.Date, DateTime.UtcNow.Date);
         if (age < 18 || age > 120)
-            throw new ArgumentOutOfRangeException(nameof(user), "Калькулятор призначений для дорослого користувача віком 18–120 років.");
+            throw new ArgumentOutOfRangeException(nameof(user), _loc.GetString("Err_AgeRestriction"));
 
         var weight = user.WeightKg.Value;
         var height = user.HeightCm.Value;
         if (weight <= 0m || height <= 0m)
-            throw new ArgumentOutOfRangeException(nameof(user), "Зріст і маса мають бути більшими за нуль.");
+            throw new ArgumentOutOfRangeException(nameof(user), _loc.GetString("Err_PositiveHeightWeight"));
 
-        // Mifflin–St Jeor: RMR = 9.99*kg + 6.25*cm - 4.92*age + sex constant.
         var resting = 9.99m * weight + 6.25m * height - 4.92m * age +
                       (user.SexForCalculation.Value == Sex.Male ? 5m : -161m);
 
@@ -61,7 +67,7 @@ public sealed class NutritionCalculator : INutritionCalculator
     public NutritionSnapshot CalculateDishPortion(Dish dish, decimal portionMultiplier)
     {
         if (portionMultiplier <= 0m)
-            throw new ArgumentOutOfRangeException(nameof(portionMultiplier), "Множник порції має бути більшим за нуль.");
+            throw new ArgumentOutOfRangeException(nameof(portionMultiplier), _loc.GetString("Err_PositivePortion"));
 
         var nutrition = dish.CalculateNutrition();
         return new NutritionSnapshot(

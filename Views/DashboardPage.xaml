@@ -6,17 +6,16 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <Grid Margin="24">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/> <!-- 0: Баннери Попереджень та Сповіщень -->
-                <RowDefinition Height="Auto"/> <!-- 1: Картки КБЖУ (4 шт) -->
-                <RowDefinition Height="Auto"/> <!-- 2: Віджет Водного Балансу -->
-                <RowDefinition Height="Auto"/> <!-- 3: Панель кнопок дій -->
-                <RowDefinition Height="Auto"/> <!-- 4: План харчування -->
-                <RowDefinition Height="*"/>    <!-- 5: Фактично з'їдено / Заглушка -->
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <!-- 0. БАННЕРИ ПРЕДУПРЕЖДЕНИЙ И УВЕДОМЛЕНИЙ -->
+            <!-- 0. БАННЕРИ -->
             <StackPanel Grid.Row="0" Margin="0,0,0,14">
-                <!-- Інформаційні статуси дій -->
                 <Border Visibility="{Binding HasStatusMessage, Converter={StaticResource BoolToVisibilityConverter}}" 
                         Background="{StaticResource AccentSoftBrush}" 
                         BorderBrush="{StaticResource AccentBrush}" 
@@ -24,7 +23,6 @@
                     <TextBlock Text="{Binding StatusMessage}" Foreground="{StaticResource AccentBrush}" FontWeight="Bold" FontSize="13"/>
                 </Border>
 
-                <!-- Дружня підказка про перевищення норм (м'який бурштиновий колір замість червоного) -->
                 <Border Visibility="{Binding HasMacroWarning, Converter={StaticResource BoolToVisibilityConverter}}" 
                         Background="#FFFDF6E6" 
                         BorderBrush="#FFE5A93C" 
@@ -33,7 +31,7 @@
                 </Border>
             </StackPanel>
 
-            <!-- 1. ВЕРХНІ КАРАТКИ КБЖУ -->
+            <!-- 1. КАРАТКИ КБЖУ -->
             <Grid Grid.Row="1" Margin="0,0,0,18">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -45,7 +43,6 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Калорії -->
                 <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}" Padding="14">
                     <StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
@@ -57,7 +54,6 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Білки -->
                 <Border Grid.Column="2" Style="{StaticResource CardBorderStyle}" Padding="14">
                     <StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
@@ -69,7 +65,6 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Жири -->
                 <Border Grid.Column="4" Style="{StaticResource CardBorderStyle}" Padding="14">
                     <StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
@@ -81,7 +76,6 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Вуглеводи -->
                 <Border Grid.Column="6" Style="{StaticResource CardBorderStyle}" Padding="14">
                     <StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
@@ -94,7 +88,7 @@
                 </Border>
             </Grid>
 
-            <!-- 2. ВІДЖЕТ ВОДНОГО БАЛАНСУ -->
+            <!-- 2. ВОДНИЙ БАЛАНС -->
             <Border Grid.Row="2" Style="{StaticResource CardBorderStyle}" Padding="16" Margin="0,0,0,18">
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -106,12 +100,13 @@
                     <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,20,0">
                         <TextBlock Text="💧" FontSize="26" VerticalAlignment="Center" Margin="0,0,10,0"/>
                         <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="Водний баланс" FontWeight="Bold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <TextBlock Text="{DynamicResource Dash_WaterBalance}" FontWeight="Bold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"/>
                             <TextBlock FontSize="12" Foreground="{StaticResource TextMutedBrush}">
                                 <Run Text="{Binding WaterDrankLiters, Mode=OneWay, StringFormat={}{0:F2}}"/>
                                 <Run Text=" / "/>
                                 <Run Text="{Binding WaterTargetLiters, Mode=OneWay, StringFormat={}{0:F1}}"/>
-                                <Run Text=" Л"/>
+                                <Run Text=" "/>
+                                <Run Text="{DynamicResource Dash_WaterLiters}"/>
                             </TextBlock>
                         </StackPanel>
                     </StackPanel>
@@ -119,23 +114,23 @@
                     <ProgressBar Grid.Column="1" Value="{Binding WaterDrankLiters}" Maximum="{Binding WaterTargetLiters}" Height="10" Foreground="{StaticResource BlueBrush}" Background="{StaticResource SurfaceSubtleBrush}" VerticalAlignment="Center" Margin="0,0,20,0"/>
 
                     <WrapPanel Grid.Column="2" VerticalAlignment="Center">
-                        <Button Content="+ 250 мл" Command="{Binding AddWaterCommand}" CommandParameter="0.25" Style="{StaticResource SecondaryButtonStyle}" Padding="10,5" Margin="0,0,6,0"/>
-                        <Button Content="+ 500 мл" Command="{Binding AddWaterCommand}" CommandParameter="0.5" Style="{StaticResource SecondaryButtonStyle}" Padding="10,5" Margin="0,0,6,0"/>
-                        <Button Content="⚙️ Ціль" Command="{Binding OpenEditWaterTargetDialogCommand}" Style="{StaticResource SecondaryButtonStyle}" Padding="8,5" Margin="0,0,6,0"/>
-                        <Button Content="🔄 Скидати" Command="{Binding ResetWaterCommand}" Style="{StaticResource SecondaryButtonStyle}" Padding="8,5" ToolTip="Скинути випиту воду"/>
+                        <Button Content="{DynamicResource Dash_Add250ml}" Command="{Binding AddWaterCommand}" CommandParameter="0.25" Style="{StaticResource SecondaryButtonStyle}" Padding="10,5" Margin="0,0,6,0"/>
+                        <Button Content="{DynamicResource Dash_Add500ml}" Command="{Binding AddWaterCommand}" CommandParameter="0.5" Style="{StaticResource SecondaryButtonStyle}" Padding="10,5" Margin="0,0,6,0"/>
+                        <Button Content="{DynamicResource Dash_WaterTargetBtn}" Command="{Binding OpenEditWaterTargetDialogCommand}" Style="{StaticResource SecondaryButtonStyle}" Padding="8,5" Margin="0,0,6,0"/>
+                        <Button Content="{DynamicResource Dash_WaterResetBtn}" Command="{Binding ResetWaterCommand}" Style="{StaticResource SecondaryButtonStyle}" Padding="8,5" ToolTip="{DynamicResource Dash_WaterResetTip}"/>
                     </WrapPanel>
                 </Grid>
             </Border>
 
-            <!-- 3. ПАНЕЛЬ КНОПОК ДІЙ -->
+            <!-- 3. ДІЇ -->
             <WrapPanel Grid.Row="3" Margin="0,0,0,18">
-                <Button Content="➕ Додати прийом їжі" Command="{Binding AddMealCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,8"/>
-                <Button Content="💡 Що мені з'їсти зараз?" Command="{Binding SuggestMealCommand}" Style="{StaticResource SecondaryButtonStyle}" Padding="14,8" Margin="0,0,8,8"/>
-                <Button Content="📄 Експорт звіту (.txt)" Command="{Binding ExportReportCommand}" Style="{StaticResource SecondaryButtonStyle}" Padding="14,8" Margin="0,0,8,8"/>
-                <Button Content="↩️ Скасувати останню дію (Undo)" Command="{Binding UndoCommand}" Style="{StaticResource SecondaryButtonStyle}" Padding="14,8" Margin="0,0,8,8"/>
+                <Button Content="{DynamicResource Dash_BtnAddMeal}" Command="{Binding AddMealCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,8"/>
+                <Button Content="{DynamicResource Dash_BtnSuggestMeal}" Command="{Binding SuggestMealCommand}" Style="{StaticResource SecondaryButtonStyle}" Padding="14,8" Margin="0,0,8,8"/>
+                <Button Content="{DynamicResource Dash_BtnExportReport}" Command="{Binding ExportReportCommand}" Style="{StaticResource SecondaryButtonStyle}" Padding="14,8" Margin="0,0,8,8"/>
+                <Button Content="{DynamicResource Dash_BtnUndo}" Command="{Binding UndoCommand}" Style="{StaticResource SecondaryButtonStyle}" Padding="14,8" Margin="0,0,8,8"/>
             </WrapPanel>
 
-            <!-- 4. ТАБЛИЦЯ ПЛАНУ ХАРЧУВАННЯ (З ВІПРАВЛЕНИМ BINDING) -->
+            <!-- 4. ПЛАН ХАРЧУВАННЯ -->
             <Border Grid.Row="4" Style="{StaticResource CardBorderStyle}" Margin="0,0,0,16">
                 <StackPanel>
                     <Grid Margin="0,0,0,12">
@@ -144,9 +139,8 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
-                        <TextBlock Grid.Column="0" Text="🍱 План харчування" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="0" Text="{DynamicResource Dash_MealPlanTitle}" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
 
-                        <!-- ComboBox із явним Mode=OneWay для властивостей раціону -->
                         <ComboBox Grid.Column="1" 
                                   ItemsSource="{Binding AvailablePlans}" 
                                   SelectedItem="{Binding SelectedPlan, Mode=TwoWay}" 
@@ -155,9 +149,11 @@
                             <ComboBox.ItemTemplate>
                                 <DataTemplate>
                                     <TextBlock>
-                                        <Run Text="План від "/>
+                                        <Run Text="{DynamicResource Dash_PlanPrefix}"/>
+                                        <Run Text=" "/>
                                         <Run Text="{Binding PlanDate, Mode=OneWay, StringFormat={}{0:dd.MM.yyyy}}"/>
-                                        <Run Text=" ("/><Run Text="{Binding TargetCalories, Mode=OneWay, StringFormat={}{0:F0}}"/><Run Text=" ккал)"/>
+                                        <Run Text=" ("/><Run Text="{Binding TargetCalories, Mode=OneWay, StringFormat={}{0:F0}}"/><Run Text=" "/>
+                                        <Run Text="{DynamicResource Unit_Kcal}"/><Run Text=")"/>
                                     </TextBlock>
                                 </DataTemplate>
                             </ComboBox.ItemTemplate>
@@ -165,51 +161,50 @@
                     </Grid>
                     <DataGrid ItemsSource="{Binding TodayPlanItems}" AutoGenerateColumns="False" IsReadOnly="True" RowHeight="38" Background="Transparent">
                         <DataGrid.Columns>
-                            <DataGridTemplateColumn Header="З'їв" Width="70">
+                            <DataGridTemplateColumn Header="{DynamicResource Dash_ColEaten}" Width="70">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <CheckBox IsChecked="{Binding IsEaten, Mode=OneWay}" Command="{Binding DataContext.TogglePlanItemEatenCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTextColumn Header="Слот" Binding="{Binding MealName}" Width="120"/>
-                            <DataGridTextColumn Header="Продукт / Страва" Binding="{Binding ItemName}" Width="*"/>
-                            <DataGridTextColumn Header="Порція" Binding="{Binding PortionGrams, StringFormat={}{0:F0} г}" Width="90"/>
-                            <DataGridTextColumn Header="Ккал" Binding="{Binding Calories, StringFormat={}{0:F0}}" Width="80"/>
-                            <DataGridTextColumn Header="Б" Binding="{Binding Proteins, StringFormat={}{0:F1}}" Width="60"/>
-                            <DataGridTextColumn Header="Ж" Binding="{Binding Fats, StringFormat={}{0:F1}}" Width="60"/>
-                            <DataGridTextColumn Header="В" Binding="{Binding Carbs, StringFormat={}{0:F1}}" Width="60"/>
+                            <DataGridTextColumn Header="{DynamicResource Dash_ColSlot}" Binding="{Binding MealName}" Width="120"/>
+                            <DataGridTextColumn Header="{DynamicResource Dash_ColItem}" Binding="{Binding ItemName}" Width="*"/>
+                            <DataGridTextColumn Header="{DynamicResource Dash_ColPortion}" Binding="{Binding PortionGrams, StringFormat={}{0:F0} г}" Width="90"/>
+                            <DataGridTextColumn Header="{DynamicResource Dash_Calories}" Binding="{Binding Calories, StringFormat={}{0:F0}}" Width="80"/>
+                            <DataGridTextColumn Header="{DynamicResource Dash_Proteins}" Binding="{Binding Proteins, StringFormat={}{0:F1}}" Width="60"/>
+                            <DataGridTextColumn Header="{DynamicResource Dash_Fats}" Binding="{Binding Fats, StringFormat={}{0:F1}}" Width="60"/>
+                            <DataGridTextColumn Header="{DynamicResource Dash_Carbs}" Binding="{Binding Carbs, StringFormat={}{0:F1}}" Width="60"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </StackPanel>
             </Border>
 
-            <!-- 5. ФАКТИЧНО З'ЇДЕНО ЗА СЬОГОДНІ -->
+            <!-- 5. ФАКТИЧНО З'ЇДЕНО -->
             <Border Grid.Row="5" Style="{StaticResource CardBorderStyle}">
                 <StackPanel>
-                    <TextBlock Text="🍳 Фактично з'їдено за сьогодні" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,12"/>
+                    <TextBlock Text="{DynamicResource Dash_ActualEatenTitle}" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,12"/>
 
                     <Border Visibility="{Binding HasNoEatenToday, Converter={StaticResource BoolToVisibilityConverter}}" Background="{StaticResource SurfaceSubtleBrush}" CornerRadius="10" Padding="28" Margin="0,4,0,0">
                         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                             <TextBlock Text="🍽️" FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,8"/>
-                            <TextBlock Text="За сьогодні ще нічого не записано" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center"/>
-                            <TextBlock Text="Почніть свій день! Натисніть «+ Додати прийом їжі» або позначте страви із плану вище." FontSize="12" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                            <TextBlock Text="{DynamicResource Dash_NoEatenTitle}" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center"/>
+                            <TextBlock Text="{DynamicResource Dash_NoEatenDesc}" FontSize="12" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" Margin="0,4,0,0" TextWrapping="Wrap"/>
                         </StackPanel>
                     </Border>
 
                     <DataGrid Visibility="{Binding HasEatenToday, Converter={StaticResource BoolToVisibilityConverter}}" ItemsSource="{Binding TodayIntakes}" AutoGenerateColumns="False" IsReadOnly="True">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Назва" Binding="{Binding ItemName}" Width="*"/>
-                            <DataGridTextColumn Header="Час" Binding="{Binding IntakeTime, StringFormat={}{0:HH:mm}}" Width="80"/>
-                            <DataGridTextColumn Header="Кількість (г)" Binding="{Binding WeightGrams, StringFormat={}{0:F0}}" Width="110"/>
-                            <DataGridTextColumn Header="Калорії" Binding="{Binding Calories, StringFormat={}{0:F0}}" Width="90"/>
-                            <DataGridTextColumn Header="Б / Ж / В" Binding="{Binding NutritionSummary}" Width="160"/>
+                            <DataGridTextColumn Header="{DynamicResource Dash_ColName}" Binding="{Binding ItemName}" Width="*"/>
+                            <DataGridTextColumn Header="{DynamicResource Dash_ColTime}" Binding="{Binding IntakeTime, StringFormat={}{0:HH:mm}}" Width="80"/>
+                            <DataGridTextColumn Header="{DynamicResource Dash_ColWeight}" Binding="{Binding WeightGrams, StringFormat={}{0:F0}}" Width="110"/>
+                            <DataGridTextColumn Header="{DynamicResource Dash_Calories}" Binding="{Binding Calories, StringFormat={}{0:F0}}" Width="90"/>
+                            <DataGridTextColumn Header="{DynamicResource Dash_ColMacros}" Binding="{Binding NutritionSummary}" Width="160"/>
                             
-                            <!-- Кнопка видалення позиції -->
                             <DataGridTemplateColumn Width="100">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Button Content="🗑️ Видалити" 
+                                        <Button Content="{DynamicResource Btn_Delete}" 
                                                 Command="{Binding DataContext.DeleteIntakeCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
                                                 CommandParameter="{Binding}" 
                                                 Style="{StaticResource SecondaryButtonStyle}" 
@@ -222,16 +217,14 @@
                 </StackPanel>
             </Border>
 
-            <!-- МОДАЛЬНІ ВІКНА -->
-            
-            <!-- Додавання еди -->
+            <!-- ДІАЛОГОВІ ВІКНА -->
             <Grid Grid.RowSpan="6" Background="{StaticResource OverlayBrush}" Visibility="{Binding IsAddMealDialogOpen, Converter={StaticResource BoolToVisibilityConverter}}">
                 <Border Background="{StaticResource SurfaceBrush}" CornerRadius="14" Padding="24" HorizontalAlignment="Center" VerticalAlignment="Center" Width="440">
                     <StackPanel>
-                        <TextBlock Text="Додати прийом їжі" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,16"/>
-                        <TextBlock Text="Оберіть продукт або страву:" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,4"/>
+                        <TextBlock Text="{DynamicResource Dash_DlgAddMealTitle}" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,16"/>
+                        <TextBlock Text="{DynamicResource Dash_DlgSelectFood}" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,4"/>
                         <ComboBox ItemsSource="{Binding AvailableFoodItems}" SelectedItem="{Binding SelectedFoodItem}" DisplayMemberPath="Name" Style="{StaticResource AppComboBoxStyle}" Margin="0,0,0,12"/>
-                        <TextBlock Text="Маса порції у грамах:" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,4"/>
+                        <TextBlock Text="{DynamicResource Dash_DlgPortionGrams}" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,4"/>
                         <TextBox Text="{Binding PortionGramsInput, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBoxStyle}" Padding="8" Margin="0,0,0,20"/>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                             <Button Content="{DynamicResource Btn_Cancel}" Command="{Binding CloseAddMealDialogCommand}" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,10,0"/>
@@ -241,27 +234,25 @@
                 </Border>
             </Grid>
 
-            <!-- Налаштування норми води -->
             <Grid Grid.RowSpan="6" Background="{StaticResource OverlayBrush}" Visibility="{Binding IsEditWaterTargetDialogOpen, Converter={StaticResource BoolToVisibilityConverter}}">
                 <Border Background="{StaticResource SurfaceBrush}" CornerRadius="14" Padding="24" Width="380" HorizontalAlignment="Center" VerticalAlignment="Center">
                     <StackPanel>
-                        <TextBlock Text="💧 Налаштування добової норми води" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,6"/>
-                        <TextBlock Text="Вкажіть вашу ціль питного режиму в літрах:" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,14"/>
+                        <TextBlock Text="{DynamicResource Dash_DlgWaterTitle}" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,6"/>
+                        <TextBlock Text="{DynamicResource Dash_DlgWaterDesc}" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,14"/>
                         <TextBox Text="{Binding WaterTargetInput, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBoxStyle}" Padding="8" Margin="0,0,0,18"/>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                             <Button Content="{DynamicResource Btn_Cancel}" Command="{Binding CloseEditWaterTargetDialogCommand}" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0"/>
-                            <Button Content="Зберегти" Command="{Binding SaveWaterTargetCommand}" Style="{StaticResource PrimaryButtonStyle}"/>
+                            <Button Content="{DynamicResource Btn_Save}" Command="{Binding SaveWaterTargetCommand}" Style="{StaticResource PrimaryButtonStyle}"/>
                         </StackPanel>
                     </StackPanel>
                 </Border>
             </Grid>
 
-            <!-- Що з'їсти зараз -->
             <Grid Grid.RowSpan="6" Background="{StaticResource OverlayBrush}" Visibility="{Binding IsSuggestMealDialogOpen, Converter={StaticResource BoolToVisibilityConverter}}">
                 <Border Background="{StaticResource SurfaceBrush}" CornerRadius="14" Padding="24" HorizontalAlignment="Center" VerticalAlignment="Center" Width="520">
                     <StackPanel>
-                        <TextBlock Text="💡 Рекомендовані варіанти перекусу" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,4"/>
-                        <TextBlock Text="Підібрано під ваш залишок калорій та БЖВ. Оберіть варіант:" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,14" TextWrapping="Wrap"/>
+                        <TextBlock Text="{DynamicResource Dash_DlgSuggestTitle}" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,4"/>
+                        <TextBlock Text="{DynamicResource Dash_DlgSuggestDesc}" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,14" TextWrapping="Wrap"/>
 
                         <ListBox ItemsSource="{Binding SuggestedMealOptions}" SelectedItem="{Binding SelectedSuggestedMeal}" Height="220" Background="Transparent" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Margin="0,0,0,14">
                             <ListBox.ItemContainerStyle>
@@ -315,13 +306,13 @@
                             </ListBox.ItemTemplate>
                         </ListBox>
 
-                        <TextBlock Text="Маса порції у грамах:" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,4"/>
+                        <TextBlock Text="{DynamicResource Dash_DlgPortionGrams}" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,4"/>
                         <TextBox Text="{Binding SuggestedPortionGramsInput, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBoxStyle}" Padding="8" Margin="0,0,0,20"/>
 
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                            <Button Content="🔄 Оновити варіанти" Command="{Binding RefreshSuggestedMealsCommand}" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,10,0"/>
+                            <Button Content="{DynamicResource Dash_BtnRefreshVariants}" Command="{Binding RefreshSuggestedMealsCommand}" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,10,0"/>
                             <Button Content="{DynamicResource Btn_Cancel}" Command="{Binding CloseSuggestMealDialogCommand}" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,10,0"/>
-                            <Button Content="➕ Додати в раціон" Command="{Binding ConfirmSuggestMealCommand}" Style="{StaticResource PrimaryButtonStyle}"/>
+                            <Button Content="{DynamicResource Dash_BtnAddToDiet}" Command="{Binding ConfirmSuggestMealCommand}" Style="{StaticResource PrimaryButtonStyle}"/>
                         </StackPanel>
                     </StackPanel>
                 </Border>

@@ -9,6 +9,7 @@ public sealed class AuthenticationService : IAuthenticationService
     private readonly ILoggingService _logging;
     private readonly SessionService _session;
     private readonly ITokenService _tokens;
+    private readonly ILocalizationService _loc;
 
     private static readonly TimeSpan DefaultSessionLifetime = TimeSpan.FromDays(7);
 
@@ -16,12 +17,14 @@ public sealed class AuthenticationService : IAuthenticationService
         IUserService users,
         ILoggingService logging,
         SessionService session,
-        ITokenService tokens)
+        ITokenService tokens,
+        ILocalizationService loc)
     {
         _users = users;
         _logging = logging;
         _session = session;
         _tokens = tokens;
+        _loc = loc;
     }
 
     public User? CurrentUser => _session.CurrentUser;
@@ -31,20 +34,20 @@ public sealed class AuthenticationService : IAuthenticationService
     {
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
         {
-            return (false, "Email і пароль не можуть бути порожніми.");
+            return (false, _loc.GetString("Auth_EmptyEmailPassword"));
         }
 
         var user = await _users.FindByEmailAsync(email, cancellationToken);
         if (user is null)
         {
             await _logging.LogActionAsync(null, ActionType.Login, $"Failed login attempt: User not found ({email.Trim()})", cancellationToken: cancellationToken);
-            return (false, "Користувач із таким email не зареєстрований.");
+            return (false, _loc.GetString("Auth_UserNotRegistered"));
         }
 
         if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
         {
             await _logging.LogActionAsync(user.Id, ActionType.Login, $"Failed login attempt: Incorrect password ({email.Trim()})", cancellationToken: cancellationToken);
-            return (false, "Неправильний пароль.");
+            return (false, _loc.GetString("Auth_IncorrectPassword"));
         }
 
         await _users.MarkLoginAsync(user.Id, cancellationToken);
@@ -53,8 +56,8 @@ public sealed class AuthenticationService : IAuthenticationService
 
         await _tokens.SaveSessionAsync(user.Id, DefaultSessionLifetime, cancellationToken);
         
-        await _logging.LogActionAsync(user.Id, ActionType.Login, $"Успішний вхід у систему під акаунтом «{user.DisplayName}».", cancellationToken: cancellationToken);
-        return (true, "Вхід виконано.");
+        await _logging.LogActionAsync(user.Id, ActionType.Login, $"User signed in: «{user.DisplayName}».", cancellationToken: cancellationToken);
+        return (true, _loc.GetString("Auth_LoginSuccess"));
     }
 
     public async Task<bool> TryAutoLoginAsync(CancellationToken cancellationToken = default)
@@ -78,17 +81,17 @@ public sealed class AuthenticationService : IAuthenticationService
     {
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(displayName) || string.IsNullOrWhiteSpace(password) || string.IsNullOrWhiteSpace(passwordConfirmation))
         {
-            return (false, "Заповніть усі обов'язкові поля.");
+            return (false, _loc.GetString("Auth_FillRequiredFields"));
         }
 
         if (password != passwordConfirmation)
         {
-            return (false, "Паролі не збігаються.");
+            return (false, _loc.GetString("Auth_PasswordMismatchErr"));
         }
 
         if (await _users.EmailExistsAsync(email, cancellationToken))
         {
-            return (false, "Такий email уже зареєстрований.");
+            return (false, _loc.GetString("Auth_EmailAlreadyRegistered"));
         }
 
         var result = await _users.RegisterAsync(email, displayName, password, cancellationToken);
@@ -109,7 +112,7 @@ public sealed class AuthenticationService : IAuthenticationService
 
         if (userId.HasValue)
         {
-            await _logging.LogActionAsync(userId.Value, ActionType.Logout, "Вихід з акаунту.", cancellationToken: cancellationToken);
+            await _logging.LogActionAsync(userId.Value, ActionType.Logout, "User logged out.", cancellationToken: cancellationToken);
         }
     }
 

@@ -10,14 +10,14 @@ public sealed class ProductService : IProductService
     private readonly IDbContextFactory<AppDbContext> _dbFactory;
     private readonly SessionService _session;
     private readonly ILoggingService _logging;
-    private readonly IAuthorizationService _authorization;
+    private readonly ILocalizationService _loc;
 
-    public ProductService(IDbContextFactory<AppDbContext> dbFactory, SessionService session, ILoggingService logging, IAuthorizationService authorization)
+    public ProductService(IDbContextFactory<AppDbContext> dbFactory, SessionService session, ILoggingService logging, ILocalizationService loc)
     {
         _dbFactory = dbFactory;
         _session = session;
         _logging = logging;
-        _authorization = authorization;
+        _loc = loc;
     }
 
     public async Task<IReadOnlyList<Product>> GetAllAsync(bool includeInactive = false, CancellationToken cancellationToken = default)
@@ -36,7 +36,7 @@ public sealed class ProductService : IProductService
         ValidateNutrition(referenceAmount, calories, proteinG, fatG, carbsG);
         await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
         if (!await db.Categories.AnyAsync(x => x.Id == categoryId && x.IsActive, cancellationToken))
-            throw new KeyNotFoundException("Категорію не знайдено або вона неактивна.");
+            throw new KeyNotFoundException(_loc.GetString("Err_CategoryNotFound"));
 
         var product = new Product(name, categoryId, basis, calories, proteinG, fatG, carbsG);
         product.SetDescription(description);
@@ -55,9 +55,9 @@ public sealed class ProductService : IProductService
         ValidateNutrition(referenceAmount, calories, proteinG, fatG, carbsG);
         await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
         var product = await db.Products.SingleOrDefaultAsync(x => x.Id == id, cancellationToken)
-            ?? throw new KeyNotFoundException("Продукт не знайдено.");
+            ?? throw new KeyNotFoundException(_loc.GetString("Err_ProductNotFound"));
         if (!await db.Categories.AnyAsync(x => x.Id == categoryId && x.IsActive, cancellationToken))
-            throw new KeyNotFoundException("Категорію не знайдено або вона неактивна.");
+            throw new KeyNotFoundException(_loc.GetString("Err_CategoryNotFound"));
 
         product.SetName(name);
         product.SetCategory(categoryId);
@@ -76,27 +76,26 @@ public sealed class ProductService : IProductService
         EnsureCanEditCatalog();
         await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
         var product = await db.Products.SingleOrDefaultAsync(x => x.Id == id, cancellationToken)
-            ?? throw new KeyNotFoundException("Продукт не знайдено.");
+            ?? throw new KeyNotFoundException(_loc.GetString("Err_ProductNotFound"));
         product.Deactivate();
         await db.SaveChangesAsync(cancellationToken);
         await _logging.LogActionAsync(_session.CurrentUser?.Id, ActionType.Delete, "Deactivated product", "Product", id, cancellationToken: cancellationToken);
     }
 
-    private static void ValidateNutrition(decimal referenceAmount, decimal calories, decimal proteinG, decimal fatG, decimal carbsG)
+    private void ValidateNutrition(decimal referenceAmount, decimal calories, decimal proteinG, decimal fatG, decimal carbsG)
     {
         foreach (var value in new[] { referenceAmount, calories, proteinG, fatG, carbsG })
         {
             if (value < 0m)
-                throw new ArgumentOutOfRangeException(nameof(value), "Харчові значення мають бути невід'ємними.");
+                throw new ArgumentOutOfRangeException(nameof(value), _loc.GetString("Err_NegativeNutrition"));
         }
         if (referenceAmount <= 0m)
-            throw new ArgumentOutOfRangeException(nameof(referenceAmount), "Базова кількість має бути більшою за 0.");
+            throw new ArgumentOutOfRangeException(nameof(referenceAmount), _loc.GetString("Err_PositiveReferenceAmount"));
     }
 
     private void EnsureCanEditCatalog()
     {
         if (!_session.IsAuthenticated)
-            throw new UnauthorizedAccessException("Потрібен вхід.");
-        // User may work with personal/application catalog; Admin additionally manages all global data.
+            throw new UnauthorizedAccessException(_loc.GetString("Err_Unauthorized"));
     }
 }

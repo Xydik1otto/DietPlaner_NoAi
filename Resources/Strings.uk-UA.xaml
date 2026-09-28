@@ -3,17 +3,20 @@
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
     <!-- Навігація та загальні елементи -->
-    <sys:String x:Key="App_Title">DietPlanner - Планувальник Харчування</sys:String>
-    <sys:String x:Key="Nav_Dashboard">Дашборд</sys:String>
-    <sys:String x:Key="Nav_Catalog">Каталог</sys:String>
-    <sys:String x:Key="Nav_PlanGenerator">Генератор меню</sys:String>
-    <sys:String x:Key="Nav_Profile">Профіль</sys:String>
-    <sys:String x:Key="Nav_Admin">Адмін-панель</sys:String>
-    <sys:String x:Key="Nav_UndoHistory">Історія дій</sys:String>
-    <sys:String x:Key="Nav_Logout">Вийти</sys:String>
+    <sys:String x:Key="App_Title">DietPlanner — Планувальник Харчування</sys:String>
+    <sys:String x:Key="App_SubTitle">Ваш раціон під контролем</sys:String>
+    <sys:String x:Key="Nav_Dashboard">📊 Дашборд</sys:String>
+    <sys:String x:Key="Nav_Catalog">📚 Каталог</sys:String>
+    <sys:String x:Key="Nav_PlanGenerator">📅 Генератор меню</sys:String>
+    <sys:String x:Key="Nav_Profile">👤 Профіль</sys:String>
+    <sys:String x:Key="Nav_Admin">⚙️ Адмін-панель</sys:String>
+    <sys:String x:Key="Nav_AdminPanel">⚙️ Адмін-панель</sys:String>
+    <sys:String x:Key="Nav_UndoHistory">↺ Історія дій</sys:String>
+    <sys:String x:Key="Nav_Statistics">📈 Статистика</sys:String>
+    <sys:String x:Key="Nav_Logout">🚪 Вийти з акаунта</sys:String>
     <sys:String x:Key="Nav_Language">Мова інтерфейсу:</sys:String>
 
-    <!-- Спільні кнопки -->
+    <!-- Спільні кнопки та дії -->
     <sys:String x:Key="Btn_Cancel">Скасувати</sys:String>
     <sys:String x:Key="Btn_Save">Зберегти</sys:String>
     <sys:String x:Key="Btn_Delete">Видалити</sys:String>
@@ -21,71 +24,374 @@
     <sys:String x:Key="Btn_Back">Назад</sys:String>
     <sys:String x:Key="Btn_Search">Шукати</sys:String>
     <sys:String x:Key="Btn_Confirm">Підтвердити</sys:String>
+    <sys:String x:Key="Btn_Add">Додати</sys:String>
+    <sys:String x:Key="Btn_Refresh">Оновити</sys:String>
+    <sys:String x:Key="Btn_All">Всі</sys:String>
+    <sys:String x:Key="Btn_Show">Показати</sys:String>
+    <sys:String x:Key="Btn_Replace">Замінити</sys:String>
+    <sys:String x:Key="Btn_Reset">Скинути</sys:String>
 
-    <!-- Дашборд -->
+    <!-- Авторизація (Auth) -->
+    <sys:String x:Key="Auth_PageTitle">Авторизація</sys:String>
+    <sys:String x:Key="Auth_BrandTitle">Плануй харчування.&#10;Розумій свій день.</sys:String>
+    <sys:String x:Key="Auth_BrandDesc">Один простий простір для продуктів, прийомів їжі, КБЖУ та персонального плану.</sys:String>
+    <sys:String x:Key="Auth_FeatureCalTitle">Контроль калорій</sys:String>
+    <sys:String x:Key="Auth_FeatureCalDesc">Добова ціль і фактичне споживання</sys:String>
+    <sys:String x:Key="Auth_FeatureKbjuTitle">КБЖУ в одному місці</sys:String>
+    <sys:String x:Key="Auth_FeatureKbjuDesc">Швидко бачиш, де знаходишся відносно цілі</sys:String>
+    <sys:String x:Key="Auth_PrivacyNote">Персональні дані зберігаються локально у твоєму профілі.</sys:String>
+    <sys:String x:Key="Auth_CardSubtitle">Увійди, щоб продовжити роботу з персональним планом.</sys:String>
+    <sys:String x:Key="Auth_Email">Email</sys:String>
+    <sys:String x:Key="Auth_FullName">Ім'я та прізвище</sys:String>
+    <sys:String x:Key="Auth_Password">Пароль</sys:String>
+    <sys:String x:Key="Auth_ConfirmPassword">Підтвердження пароля</sys:String>
+    <sys:String x:Key="Auth_LoginModeTitle">Вхід</sys:String>
+    <sys:String x:Key="Auth_RegisterModeTitle">Створення облікового запису</sys:String>
+    <sys:String x:Key="Auth_LoginSubmit">Увійти</sys:String>
+    <sys:String x:Key="Auth_RegisterSubmit">Зареєструватися</sys:String>
+    <sys:String x:Key="Auth_SwitchToRegister">Немає облікового запису? Реєстрація</sys:String>
+    <sys:String x:Key="Auth_SwitchToLogin">Уже є обліковий запис? Увійти</sys:String>
+    <sys:String x:Key="Auth_EmailRequired">Введіть Email.</sys:String>
+    <sys:String x:Key="Auth_PasswordRequired">Введіть пароль.</sys:String>
+    <sys:String x:Key="Auth_PasswordMismatch">Підтвердження пароля не збігається.</sys:String>
+    <sys:String x:Key="Auth_NameField">Ім'я та прізвище</sys:String>
+
+    <!-- Онлайн-пошук API -->
+    <sys:String x:Key="Api_WindowTitle">🌐 Онлайн-пошук продуктів (Open Food Facts)</sys:String>
+    <sys:String x:Key="Api_Subtitle">Шукайте брендовані товари та інгредієнти у глобальній базі даних:</sys:String>
+    <sys:String x:Key="Api_SaveToLocal">➕ Зберегти в локальний каталог</sys:String>
+    <sys:String x:Key="Api_Col_NameBrand">Назва / Бренд</sys:String>
+    <sys:String x:Key="Api_Col_Kcal">Ккал / 100г</sys:String>
+
+    <!-- Дашборд (Dashboard) -->
     <sys:String x:Key="Dash_Title">Дашборд</sys:String>
+    <sys:String x:Key="Dash_Welcome">Вітаємо, {0}!</sys:String>
     <sys:String x:Key="Dash_Calories">Калорії</sys:String>
     <sys:String x:Key="Dash_Proteins">Білки</sys:String>
     <sys:String x:Key="Dash_Fats">Жири</sys:String>
     <sys:String x:Key="Dash_Carbs">Вуглеводи</sys:String>
+    <sys:String x:Key="Dash_CaloriesDisplay">{0:F0} / {1:F0} ккал</sys:String>
+    <sys:String x:Key="Dash_ProteinsDisplay">{0:F1} / {1:F1} г</sys:String>
+    <sys:String x:Key="Dash_FatsDisplay">{0:F1} / {1:F1} г</sys:String>
+    <sys:String x:Key="Dash_CarbsDisplay">{0:F1} / {1:F1} г</sys:String>
+    <sys:String x:Key="Dash_WaterBalance">Водний баланс</sys:String>
+    <sys:String x:Key="Dash_WaterTarget">Ціль</sys:String>
+    <sys:String x:Key="Dash_WaterLiters">Л</sys:String>
+    <sys:String x:Key="Dash_Add250ml">+ 250 мл</sys:String>
+    <sys:String x:Key="Dash_Add500ml">+ 500 мл</sys:String>
+    <sys:String x:Key="Dash_WaterTargetBtn">⚙️ Ціль</sys:String>
+    <sys:String x:Key="Dash_WaterResetBtn">🔄 Скидати</sys:String>
+    <sys:String x:Key="Dash_WaterResetTip">Скинути випиту воду</sys:String>
     <sys:String x:Key="Dash_AddMeal">+ Додати прийом їжі</sys:String>
-    <sys:String x:Key="Dash_SuggestMeal">Що мені з'їсти зараз?</sys:String>
-    <sys:String x:Key="Dash_ExportReport">Експорт звіту (.txt)</sys:String>
-    <sys:String x:Key="Dash_Undo">Скасувати останню дію (Undo)</sys:String>
-    <sys:String x:Key="Dash_Time">Час</sys:String>
-    <sys:String x:Key="Dash_ItemName">Назва продукту/страви</sys:String>
-    <sys:String x:Key="Dash_Weight">Кількість (г)</sys:String>
-    <sys:String x:Key="Dash_MacrosSummary">Б / Ж / В</sys:String>
-    <sys:String x:Key="Dash_DialogTitle">Додати прийом їжі</sys:String>
-    <sys:String x:Key="Dash_SelectFood">Оберіть продукт або страву:</sys:String>
-    <sys:String x:Key="Dash_EnterGrams">Маса / Порція (в грамах):</sys:String>
+    <sys:String x:Key="Dash_SuggestMeal">💡 Що мені з'їсти зараз?</sys:String>
+    <sys:String x:Key="Dash_ExportReport">📄 Експорт звіту (.txt)</sys:String>
+    <sys:String x:Key="Dash_Undo">↩️ Скасувати останню дію (Undo)</sys:String>
+    <sys:String x:Key="Dash_BtnAddMeal">➕ Додати прийом їжі</sys:String>
+    <sys:String x:Key="Dash_BtnSuggestMeal">💡 Що мені з'їсти зараз?</sys:String>
+    <sys:String x:Key="Dash_BtnExportReport">📄 Експорт звіту (.txt)</sys:String>
+    <sys:String x:Key="Dash_BtnUndo">↩️ Скасувати останню дію (Undo)</sys:String>
+    <sys:String x:Key="Dash_MealPlanTitle">🍱 План харчування</sys:String>
+    <sys:String x:Key="Dash_PlanPrefix">План від</sys:String>
+    <sys:String x:Key="Dash_ColEaten">З'їв</sys:String>
+    <sys:String x:Key="Dash_ColSlot">Слот</sys:String>
+    <sys:String x:Key="Dash_ColItem">Продукт / Страва</sys:String>
+    <sys:String x:Key="Dash_ColPortion">Порція</sys:String>
+    <sys:String x:Key="Dash_TodayEaten">🍳 Фактично з'їдено за сьогодні</sys:String>
+    <sys:String x:Key="Dash_ActualEatenTitle">🍳 Фактично з'їдено за сьогодні</sys:String>
+    <sys:String x:Key="Dash_EatenEmptyTitle">За сьогодні ще нічого не записано</sys:String>
+    <sys:String x:Key="Dash_EatenEmptyDesc">Почніть свій день! Натисніть «+ Додати прийом їжі» або позначте страви із плану вище.</sys:String>
+    <sys:String x:Key="Dash_NoEatenTitle">За сьогодні ще нічого не записано</sys:String>
+    <sys:String x:Key="Dash_NoEatenDesc">Почніть свій день! Натисніть «+ Додати прийом їжі» або позначте страви із плану вище.</sys:String>
+    <sys:String x:Key="Dash_ColName">Назва</sys:String>
+    <sys:String x:Key="Dash_ColTime">Час</sys:String>
+    <sys:String x:Key="Dash_ColWeight">Кількість (г)</sys:String>
+    <sys:String x:Key="Dash_ColMacros">Б / Ж / В</sys:String>
+    <sys:String x:Key="Dash_DlgAddMealTitle">Додати прийом їжі</sys:String>
+    <sys:String x:Key="Dash_DlgSelectFood">Оберіть продукт або страву:</sys:String>
+    <sys:String x:Key="Dash_DlgPortionGrams">Маса порції у грамах:</sys:String>
+    <sys:String x:Key="Dash_DlgWaterTitle">💧 Налаштування добової норми води</sys:String>
+    <sys:String x:Key="Dash_DlgWaterDesc">Вкажіть вашу ціль питного режиму в літрах:</sys:String>
+    <sys:String x:Key="Dash_DlgSuggestTitle">💡 Рекомендовані варіанти перекусу</sys:String>
+    <sys:String x:Key="Dash_DlgSuggestDesc">Підібрано під ваш залишок калорій та БЖВ. Оберіть варіант:</sys:String>
+    <sys:String x:Key="Dash_BtnRefreshVariants">🔄 Оновити варіанти</sys:String>
+    <sys:String x:Key="Dash_BtnAddToDiet">➕ Додати в раціон</sys:String>
+    <sys:String x:Key="Dash_MacroWarning">💡 Ви трохи орієнтовно перевищили ціль: {0}. Це цілком нормально в межах тижневого балансу! За бажанням скоригуйте наступні прийоми їжі.</sys:String>
+    <sys:String x:Key="Dash_WarnFats">жирів (+{0:F1}г)</sys:String>
+    <sys:String x:Key="Dash_WarnCalories">калорій (+{0:F0}ккал)</sys:String>
+    <sys:String x:Key="Dash_WarnCarbs">вуглеводів (+{0:F1}г)</sys:String>
+    <sys:String x:Key="Dash_WarnWater">води (+{0:F2}Л)</sys:String>
+    <sys:String x:Key="Dash_IntakeDeleted">🗑️ Видалено з прийомів їжі: {0}.</sys:String>
+    <sys:String x:Key="Dash_WaterExcessWarning">⚠️ Увага! Випито {0:F2} Л води (надмірна кількість).</sys:String>
+    <sys:String x:Key="Dash_WaterAdded">💧 Додано {0:F0} мл води. Всього випито: {1:F2} Л.</sys:String>
+    <sys:String x:Key="Dash_WaterReset">💧 Лічильник випитої води скинуто.</sys:String>
+    <sys:String x:Key="Dash_WaterTargetUpdated">Добову норму води оновлено до {0:F1} Л.</sys:String>
+    <sys:String x:Key="Dash_ValidLitersRequired">Вкажіть коректну кількість літрів (більше 0).</sys:String>
+    <sys:String x:Key="Dash_SearchingSnacks">🔍 Підбираємо перекуси з бази даних та OpenFoodFacts API...</sys:String>
+    <sys:String x:Key="Dash_SnackApiCategory">Перекус (OpenFoodFacts API)</sys:String>
+    <sys:String x:Key="Dash_SnackCategory">Перекус</sys:String>
+    <sys:String x:Key="Dash_SnacksNotFound">Перекусів не знайдено.</sys:String>
+    <sys:String x:Key="Dash_SelectSuggested">Оберіть варіант із запропонованого списку.</sys:String>
+    <sys:String x:Key="Dash_EnterGramsValid">Вкажіть масу у грамах більше 0.</sys:String>
+    <sys:String x:Key="Dash_SnackApiDescription">Перекус із OpenFoodFacts API</sys:String>
+    <sys:String x:Key="Dash_ItemAdded">Зараховано в прийоми їжі: {0} ({1:F0}г).</sys:String>
+    <sys:String x:Key="Dash_ReportSaved">📄 Звіт успішно збережено у файл: {0}</sys:String>
+    <sys:String x:Key="Dash_UndoSuccess">↩️ Останню дію успішно скасовано.</sys:String>
+    <sys:String x:Key="Dash_UndoError">Не вдалося скасувати дію: {0}</sys:String>
+    <sys:String x:Key="Dash_MarkUnchecked">Скасовано позначку для: {0}.</sys:String>
+    <sys:String x:Key="Dash_SelectProductOrDish">Оберіть продукт або страву зі списку.</sys:String>
+    <sys:String x:Key="Dash_MealAdded">Додано прийом їжі: {0} ({1}г).</sys:String>
+    <sys:String x:Key="Dash_ErrDelete">Помилка видалення: {0}</sys:String>
+    <sys:String x:Key="Dash_ErrExport">Помилка експорту: {0}</sys:String>
+    <sys:String x:Key="Dash_ErrSave">Помилка збереження: {0}</sys:String>
 
-    <!-- Каталог -->
-    <sys:String x:Key="Cat_Title">Каталог продуктів та страв</sys:String>
+    <!-- Каталог (Catalog) -->
+    <sys:String x:Key="Cat_Title">📚 Каталог продуктів та страв</sys:String>
+    <sys:String x:Key="Cat_BtnApi">🌐 Пошук в API</sys:String>
+    <sys:String x:Key="Cat_BtnCategory">+ Категорія</sys:String>
     <sys:String x:Key="Cat_AddProduct">+ Додати продукт</sys:String>
     <sys:String x:Key="Cat_AddDish">+ Створити страву</sys:String>
+    <sys:String x:Key="Cat_AddCategory">+ Категорія</sys:String>
+    <sys:String x:Key="Cat_ApiSearch">🌐 Пошук в API</sys:String>
     <sys:String x:Key="Cat_EditSelected">Редагувати обране</sys:String>
     <sys:String x:Key="Cat_DeleteSelected">Видалити обране</sys:String>
+    <sys:String x:Key="Cat_ResetAll">✕ Всі</sys:String>
     <sys:String x:Key="Cat_IncludeDishes">Включати складені страви</sys:String>
     <sys:String x:Key="Cat_Category">Категорія</sys:String>
+    <sys:String x:Key="Cat_AllCategories">Усі категорії</sys:String>
+    <sys:String x:Key="Cat_Uncategorized">Без категорії</sys:String>
     <sys:String x:Key="Cat_Name">Назва</sys:String>
     <sys:String x:Key="Cat_Calories">Калорії (ккал)</sys:String>
     <sys:String x:Key="Cat_Proteins">Білки (г)</sys:String>
     <sys:String x:Key="Cat_Fats">Жири (г)</sys:String>
     <sys:String x:Key="Cat_Carbs">Вуглеводи (г)</sys:String>
-    <sys:String x:Key="Cat_ProductDialogTitle">Створення / Редагування продукту</sys:String>
-    <sys:String x:Key="Cat_DishDialogTitle">Створення / Редагування страви</sys:String>
+    <sys:String x:Key="Cat_Sort_NameAsc">Назва (А-Я)</sys:String>
+    <sys:String x:Key="Cat_Sort_NameDesc">Назва (Я-А)</sys:String>
+    <sys:String x:Key="Cat_Sort_CalAsc">Калорійність (зростання)</sys:String>
+    <sys:String x:Key="Cat_Sort_CalDesc">Калорійність (спадання)</sys:String>
+    <sys:String x:Key="Cat_Sort_ProtDesc">Білки (спадання)</sys:String>
+    <sys:String x:Key="Cat_DlgCatTitle">Створення нової категорії</sys:String>
+    <sys:String x:Key="Cat_DlgCatName">Назва категорії:</sys:String>
+    <sys:String x:Key="Cat_DlgCatDesc">Опис (необов'язково):</sys:String>
+    <sys:String x:Key="Cat_ProductDialogTitle">Параметри продукту</sys:String>
+    <sys:String x:Key="Cat_Description">Опис:</sys:String>
+    <sys:String x:Key="Cat_Basis">База вимірювання:</sys:String>
+    <sys:String x:Key="Cat_PortionRef">Порція (г/мл/шт):</sys:String>
+    <sys:String x:Key="Cat_Allergens">Алергени (через кому):</sys:String>
+    <sys:String x:Key="Cat_DietaryTags">Дієтичні теги (через кому):</sys:String>
+    <sys:String x:Key="Cat_DishDialogTitle">Створення страви</sys:String>
+    <sys:String x:Key="Cat_DishName">Назва страви:</sys:String>
+    <sys:String x:Key="Cat_DishIngredientsTitle">Інгредієнти страви (за грамажем)</sys:String>
 
-    <!-- Генератор та історія планів -->
-    <sys:String x:Key="Plan_Title">Генератор раціону</sys:String>
-    <sys:String x:Key="Plan_Params">Параметри генерації</sys:String>
-    <sys:String x:Key="Plan_MealCount">Кількість прийомів їжі (3-6):</sys:String>
-    <sys:String x:Key="Plan_CalorieGoal">Ціль калорій:</sys:String>
-    <sys:String x:Key="Plan_GenerateBtn">Згенерувати новий план</sys:String>
-    <sys:String x:Key="Plan_HistoryGroup">Історія збережених планів</sys:String>
-    <sys:String x:Key="Plan_SelectHistory">Оберіть раціон з історії:</sys:String>
-    <sys:String x:Key="Plan_SlotName">Прийом їжі</sys:String>
-    <sys:String x:Key="Plan_SuggestedFood">Запропонована страва/продукт</sys:String>
+    <!-- Генератор раціону (Plan Generator) -->
+    <sys:String x:Key="Plan_Title">Генератор меню</sys:String>
+    <sys:String x:Key="Plan_Subtitle">Автоматичне формування раціону на день або тиждень на основі параметрів вашого профілю.</sys:String>
+    <sys:String x:Key="Plan_Params">Налаштування генерації</sys:String>
+    <sys:String x:Key="Plan_SettingsTitle">⚙️ Налаштування генерації</sys:String>
+    <sys:String x:Key="Plan_SettingsDesc">Оберіть кількість прийомів їжі та формат розрахунку.</sys:String>
+    <sys:String x:Key="Plan_MealCount">Прийомів на день:</sys:String>
+    <sys:String x:Key="Plan_CalorieGoal">Добова ціль (з профілю):</sys:String>
+    <sys:String x:Key="Plan_DailyTargetProfile">Добова ціль (з профілю):</sys:String>
+    <sys:String x:Key="Plan_GenerateDay">⚡ Згенерувати на день</sys:String>
+    <sys:String x:Key="Plan_GenerateWeek">📅 Згенерувати на тиждень (7 днів)</sys:String>
+    <sys:String x:Key="Plan_BtnGenDay">⚡ Згенерувати на день</sys:String>
+    <sys:String x:Key="Plan_BtnGenWeek">📅 Згенерувати на тиждень (7 днів)</sys:String>
+    <sys:String x:Key="Plan_ProfileCardTitle">📋 Дані вашого профілю</sys:String>
+    <sys:String x:Key="Plan_HistoryTitle">🍱 Сформовані раціони</sys:String>
+    <sys:String x:Key="Plan_ColDishRec">Страва / Рекомендація</sys:String>
+    <sys:String x:Key="Plan_DlgReplaceTitle">Заміна страви у раціоні</sys:String>
+    <sys:String x:Key="Plan_DlgReplaceSelect">Оберіть заміну з каталогу:</sys:String>
+    <sys:String x:Key="Plan_NoItemsError">Неможливо сформувати план: відсутні доступні страви та продукти.</sys:String>
+    <sys:String x:Key="Plan_AddDishesHint">Додайте страви в каталог.</sys:String>
+    <sys:String x:Key="Plan_GenSuccess">План на {0:dd.MM.yyyy} успішно згенеровано! Ціль: ~{1:F0} ккал.</sys:String>
+    <sys:String x:Key="Plan_LogCreated">Сформовано план харчування на {0:yyyy-MM-dd} ({1} прийомів, {2:F0} ккал).</sys:String>
 
-    <!-- Профіль -->
-    <sys:String x:Key="Prof_Title">Профіль користувача</sys:String>
+    <!-- Профіль (Profile) -->
+    <sys:String x:Key="Prof_Title">Персональний профіль</sys:String>
+    <sys:String x:Key="Prof_Subtitle">Основна інформація, параметри розрахунку та дієтичні обмеження.</sys:String>
+    <sys:String x:Key="Prof_AccountCard">Ваш обліковий запис</sys:String>
+    <sys:String x:Key="Prof_StatusCard">Статус профілю</sys:String>
     <sys:String x:Key="Prof_CurrentEmail">Поточний Email:</sys:String>
-    <sys:String x:Key="Prof_DisplayName">Ім'я:</sys:String>
+    <sys:String x:Key="Prof_PersonalParams">Персональні параметри</sys:String>
+    <sys:String x:Key="Prof_DisplayName">Ім'я та прізвище:</sys:String>
     <sys:String x:Key="Prof_BirthDate">Дата народження:</sys:String>
     <sys:String x:Key="Prof_Height">Зріст (см):</sys:String>
     <sys:String x:Key="Prof_Weight">Вага (кг):</sys:String>
-    <sys:String x:Key="Prof_Sex">Стать:</sys:String>
+    <sys:String x:Key="Prof_Sex">Стать для розрахунку:</sys:String>
     <sys:String x:Key="Prof_Activity">Рівень активності:</sys:String>
     <sys:String x:Key="Prof_Goal">Ціль харчування:</sys:String>
     <sys:String x:Key="Prof_Restrictions">Дієтичні обмеження та алергени</sys:String>
+    <sys:String x:Key="Prof_RestrictionsDesc">Познач обмеження, які мають враховуватися під час формування раціону.</sys:String>
     <sys:String x:Key="Prof_SaveProfile">Зберегти профіль та обмеження</sys:String>
 
-    <!-- Адмін Панель -->
-    <sys:String x:Key="Admin_Title">Панель Адміністратора</sys:String>
-    <sys:String x:Key="Admin_UsersTab">Керування користувачами</sys:String>
-    <sys:String x:Key="Admin_LogsTab">Системні логи</sys:String>
-    <sys:String x:Key="Admin_RefreshList">Оновити список</sys:String>
-    <sys:String x:Key="Admin_ChangeRole">Змінити роль</sys:String>
-    <sys:String x:Key="Admin_RegDate">Дата реєстрації</sys:String>
+    <!-- Переліки (Enums) -->
+    <sys:String x:Key="Goal_LoseWeight">Схуднення</sys:String>
+    <sys:String x:Key="Goal_GainWeight">Набір маси</sys:String>
+    <sys:String x:Key="Goal_MaintainWeight">Підтримка ваги</sys:String>
+    <sys:String x:Key="Goal_Recompose">Рекомпозиція тіла</sys:String>
 
+    <sys:String x:Key="Activity_Sedentary">Низька (сидячий спосіб)</sys:String>
+    <sys:String x:Key="Activity_Light">Легка активність</sys:String>
+    <sys:String x:Key="Activity_Moderate">Помірні тренування</sys:String>
+    <sys:String x:Key="Activity_High">Висока активність</sys:String>
+    <sys:String x:Key="Activity_VeryHigh">Екстремальні навантаження</sys:String>
+
+    <!-- Розширена Адмін-панель -->
+    <sys:String x:Key="Admin_TabStats">📊 Статистика</sys:String>
+    <sys:String x:Key="Admin_TabUsers">👥 Користувачі</sys:String>
+    <sys:String x:Key="Admin_TabLogs">🪵 Логи системи</sys:String>
+    <sys:String x:Key="Admin_TabBroadcast">📢 Глобальне сповіщення</sys:String>
+
+    <sys:String x:Key="Admin_StatTotalUsers">Усього користувачів</sys:String>
+    <sys:String x:Key="Admin_StatActiveUsers">Активні користувачі (30д)</sys:String>
+    <sys:String x:Key="Admin_StatTotalPlans">Сформовано раціонів</sys:String>
+
+    <sys:String x:Key="Admin_CriticalLogs">🔥 Критичні помилки</sys:String>
+    <sys:String x:Key="Admin_UserLogs">👤 Дії користувачів</sys:String>
+
+    <sys:String x:Key="Admin_DeleteImmediate">💥 Видалити миттєво</sys:String>
+    <sys:String x:Key="Admin_BroadcastHeader">Опублікувати оголошення для всіх користувачів</sys:String>
+    <sys:String x:Key="Admin_BroadcastPlaceholder">Введіть текст оголошення...</sys:String>
+    <sys:String x:Key="Admin_BroadcastSend">🚀 Надіслати всім</sys:String>
+    <sys:String x:Key="Admin_BroadcastClear">🗑️ Очистити оголошення</sys:String>
+    <!-- Адмін-панель -->
+    <sys:String x:Key="Admin_RefreshList">🔄 Оновити список</sys:String>
+    <sys:String x:Key="Admin_RefreshLogs">🔄 Оновити логи</sys:String>
+    <sys:String x:Key="Admin_TotalUsersLabel">Всього користувачів у системі:</sys:String>
+    <sys:String x:Key="Role_User">Користувач</sys:String>
+    <sys:String x:Key="Role_Admin">Адміністратор</sys:String>
+    <sys:String x:Key="Admin_NoCriticalErrors">✅ Критичних помилок не виявлено.</sys:String>
+    <sys:String x:Key="Admin_NoUserLogs">ℹ️ Логи дій користувачів відсутні.</sys:String>
+    
+    <!-- Статистика -->
+    <sys:String x:Key="Stat_PageTitle">📈 Статистика та Аналітика</sys:String>
+    <sys:String x:Key="Stat_PageSubtitle">Відстежуйте споживання калорій та макронутрієнтів по днях, тижнях або за місяць.</sys:String>
+    <sys:String x:Key="Stat_ModeDay">День</sys:String>
+    <sys:String x:Key="Stat_ModeWeek">Тиждень</sys:String>
+    <sys:String x:Key="Stat_ModeMonth">Місяць</sys:String>
+    <sys:String x:Key="Stat_MonthLabel">Місяць:</sys:String>
+    <sys:String x:Key="Stat_DateLabel">Дата:</sys:String>
+    <sys:String x:Key="Stat_WeekLabel">Тиждень:</sys:String>
+    <sys:String x:Key="Stat_ColDateDay">Дата / День</sys:String>
+    <sys:String x:Key="Stat_ColGoalStatus">Виконання цілі</sys:String>
+    <sys:String x:Key="Stat_Target">Ціль</sys:String>
+    <sys:String x:Key="Stat_Week">Тиждень</sys:String>
+    <sys:String x:Key="Stat_DailyDetail">Деталізація за день</sys:String>
+    <sys:String x:Key="Stat_WeeklyDetail">Деталізація по днях тижня</sys:String>
+    <sys:String x:Key="Stat_MonthlyDetail">Деталізація за кожен день місяця</sys:String>
+    <sys:String x:Key="Stat_InNorm">В нормі</sys:String>
+    <sys:String x:Key="Stat_NoRecords">Немає записів</sys:String>
+    <sys:String x:Key="Stat_Completed">Виконано</sys:String>
+    <sys:String x:Key="Stat_Skipped">Пропущено</sys:String>
+
+    <!-- Історія дій -->
+    <sys:String x:Key="Undo_Subtitle">Переглядай останні зміни та поверни останню операцію одним кліком.</sys:String>
+    <sys:String x:Key="Undo_BtnRefresh">Оновити список</sys:String>
+    <sys:String x:Key="Undo_BtnUndo">Скасувати останню дію (Undo)</sys:String>
+    <sys:String x:Key="Undo_ColTime">Час</sys:String>
+    <sys:String x:Key="Undo_ColActionType">Тип дії</sys:String>
+    <sys:String x:Key="Undo_ColDesc">Опис зміни</sys:String>
+    <sys:String x:Key="Undo_ColEntity">Об'єкт</sys:String>
+    <sys:String x:Key="Undo_GeneralEntity">Загальне</sys:String>
+    <sys:String x:Key="Undo_SuccessMessage">Останню дію успішно скасовано.</sys:String>
+
+    <!-- Валідація та системні одиниці -->
+    <sys:String x:Key="Unit_Kcal">ккал</sys:String>
+    <sys:String x:Key="Unit_Grams">г</sys:String>
+
+    <sys:String x:Key="Val_RequiredField">{0}: поле не може бути порожнім.</sys:String>
+    <sys:String x:Key="Val_MaxLengthExceeded">{0}: максимальна довжина — {1} символів.</sys:String>
+    <sys:String x:Key="Val_InvalidNumber">{0}: некоректне значення числа.</sys:String>
+    <sys:String x:Key="Val_EnterValidNumber">{0}: введіть число.</sys:String>
+    <sys:String x:Key="Val_RangeExceeded">{0}: значення має бути в межах {1}–{2}.</sys:String>
+    <sys:String x:Key="Val_InvalidEmailFormat">{0}: некоректний формат email.</sys:String>
+    <sys:String x:Key="Val_MinPasswordLength">{0}: мінімальна довжина — {1} символів.</sys:String>
+    
+    <!-- Сервісні повідомлення та винятки -->
+    <sys:String x:Key="Err_Unauthorized">Потрібен вхід для виконання цієї дії.</sys:String>
+    <sys:String x:Key="Err_FillProfileCalc">Заповніть дату народження, стать, зріст, масу, активність та ціль у профілі.</sys:String>
+    <sys:String x:Key="Err_AgeRestriction">Калькулятор призначений для дорослого користувача віком 18–120 років.</sys:String>
+    <sys:String x:Key="Err_PositiveHeightWeight">Зріст і маса мають бути більшими за нуль.</sys:String>
+    <sys:String x:Key="Err_PositivePortion">Множник порції має бути більшим за нуль.</sys:String>
+
+    <sys:String x:Key="Err_CategoryNotFound">Категорію не знайдено або вона неактивна.</sys:String>
+    <sys:String x:Key="Err_CategoryExists">Категорія з такою назвою вже існує.</sys:String>
+    <sys:String x:Key="Err_ProductNotFound">Продукт не знайдено.</sys:String>
+    <sys:String x:Key="Err_DishNotFound">Страву не знайдено.</sys:String>
+    <sys:String x:Key="Err_UserNotFound">Користувача не знайдено.</sys:String>
+    <sys:String x:Key="Err_ProductRequiredInDish">Страва повинна містити хоча б один продукт.</sys:String>
+    <sys:String x:Key="Err_ProductNotSelected">Не вибрано продукт.</sys:String>
+    <sys:String x:Key="Err_PositiveIngredientAmount">Кількість інгредієнта має бути більшою за 0.</sys:String>
+    <sys:String x:Key="Err_EmptyUnit">Одиниця вимірювання не може бути порожньою.</sys:String>
+    <sys:String x:Key="Err_NegativeNutrition">Харчові значення мають бути невід'ємними.</sys:String>
+    <sys:String x:Key="Err_PositiveReferenceAmount">Базова кількість має бути більшою за 0.</sys:String>
+
+    <!-- Авторизація сервісу -->
+    <sys:String x:Key="Auth_EmptyEmailPassword">Email і пароль не можуть бути порожніми.</sys:String>
+    <sys:String x:Key="Auth_UserNotRegistered">Користувач із таким email не зареєстрований.</sys:String>
+    <sys:String x:Key="Auth_IncorrectPassword">Неправильний пароль.</sys:String>
+    <sys:String x:Key="Auth_FillRequiredFields">Заповніть усі обов'язкові поля.</sys:String>
+    <sys:String x:Key="Auth_PasswordMismatchErr">Паролі не збігаються.</sys:String>
+    <sys:String x:Key="Auth_EmailAlreadyRegistered">Такий email уже зареєстрований.</sys:String>
+    <sys:String x:Key="Auth_LoginSuccess">Вхід виконано.</sys:String>
+
+    <!-- Meal Intake / Прийоми їжі -->
+    <sys:String x:Key="Meal_DefaultName">Прийом їжі</sys:String>
+    <sys:String x:Key="Meal_AutoFixPlan">Автофіксація раціону</sys:String>
+    <sys:String x:Key="Meal_ProductCategoryDefault">Продукт</sys:String>
+    <sys:String x:Key="Meal_DishCategoryDefault">Страва</sys:String>
+    <sys:String x:Key="Meal_MacrosSummary">Б:{0:F1}г / Ж:{1:F1}г / В:{2:F1}г</sys:String>
+    <sys:String x:Key="Meal_Breakfast">Сніданок</sys:String>
+    <sys:String x:Key="Meal_Lunch">Обід</sys:String>
+    <sys:String x:Key="Meal_Dinner">Вечеря</sys:String>
+    <sys:String x:Key="Meal_Snack">Полуденок</sys:String>
+    <sys:String x:Key="Meal_SecondBreakfast">Другий сніданок</sys:String>
+    <sys:String x:Key="Meal_LateDinner">Пізня вечеря</sys:String>
+        
+    <!-- Повідомлення користувачів та обмежень -->
+    <sys:String x:Key="User_AlreadyExists">Користувач із таким email уже існує.</sys:String>
+    <sys:String x:Key="User_RegSuccessAdmin">Реєстрацію завершено. Перший обліковий запис отримав роль Admin.</sys:String>
+    <sys:String x:Key="User_RegSuccess">Реєстрацію завершено.</sys:String>
+
+    <sys:String x:Key="Restr_ProductNotAllowed">Продукт «{0}» не дозволений обмеженням «{1}».</sys:String>
+    <sys:String x:Key="Restr_ProductAllowed">Продукт дозволений.</sys:String>
+    <sys:String x:Key="Restr_DishNoProducts">Страва «{0}» не містить продуктів.</sys:String>
+    <sys:String x:Key="Restr_IngredientNoProduct">Для одного з інгредієнтів не завантажено продукт.</sys:String>
+    <sys:String x:Key="Restr_DishAllowed">Страва дозволена.</sys:String>
+    <sys:String x:Key="Restr_DishReason">Страва «{0}»: {1}</sys:String>
+
+    <sys:String x:Key="Sex_Male">Чоловіча</sys:String>
+    <sys:String x:Key="Sex_Female">Жіноча</sys:String>
+    
+    <!-- Дієтичні обмеження та алергени -->
+    <sys:String x:Key="Restr_GlutenFree">Без глютену</sys:String>
+    <sys:String x:Key="Restr_GlutenFree_Desc">Режим харчування без вмісту глютену.</sys:String>
+    
+    <sys:String x:Key="Restr_LactoseFree">Без лактози</sys:String>
+    <sys:String x:Key="Restr_LactoseFree_Desc">Режим харчування без молочного цукру (лактози).</sys:String>
+    
+    <sys:String x:Key="Restr_LowSodium">Низький вміст натрію</sys:String>
+    <sys:String x:Key="Restr_LowSodium_Desc">Режим з обмеженим споживанням солі.</sys:String>
+    
+    <sys:String x:Key="Restr_NutFree">Без горіхів</sys:String>
+    <sys:String x:Key="Restr_NutFree_Desc">Виключено всі види горіхів та арахіс.</sys:String>
+    
+    <sys:String x:Key="Restr_Pescatarian">Пескетаріанство</sys:String>
+    <sys:String x:Key="Restr_Pescatarian_Desc">Рослинна дієта з додаванням риби та морепродуктів.</sys:String>
+    
+    <sys:String x:Key="Restr_Vegan">Веганство</sys:String>
+    <sys:String x:Key="Restr_Vegan_Desc">Сувора рослинна дієта без продуктів тваринного походження.</sys:String>
+    
+    <sys:String x:Key="Restr_Vegetarian">Вегетаріанство</sys:String>
+    <sys:String x:Key="Restr_Vegetarian_Desc">Відмова від м'яса та риби, але з дозволом молочних продуктів і яєць.</sys:String>
+    
+    <!-- Звіт харчування -->
+    <sys:String x:Key="Rpt_HeaderTitle">           ЗВІТ ХАРЧУВАННЯ — DietPlanner          </sys:String>
+    <sys:String x:Key="Rpt_GenDate">Дата генерації</sys:String>
+    <sys:String x:Key="Rpt_User">Користувач</sys:String>
+    <sys:String x:Key="Rpt_BodyMetrics">Вага: {0} кг | Зріст: {1} см | ІМТ: {2:F1}</sys:String>
+    <sys:String x:Key="Rpt_DailyTarget">ДОБОВА ЦІЛЬ</sys:String>
+    <sys:String x:Key="Rpt_MacrosTarget">Білки: {0:F1}г | Жири: {1:F1}г | Вуглеводи: {2:F1}г</sys:String>
+    <sys:String x:Key="Rpt_TodayIntakesHeader">СПИСОК ПРИЙОМІВ ЇЖІ ЗА СЬОГОДНІ:</sys:String>
+    <sys:String x:Key="Rpt_FactSummary">ФАКТИЧНО СПОЖИТО: {0:F0} ккал | Б:{1:F1}г | Ж:{2:F1}г | В:{3:F1}г</sys:String>
+    <sys:String x:Key="Prof_AppSettings">Налаштування застосунку</sys:String>
 </ResourceDictionary>

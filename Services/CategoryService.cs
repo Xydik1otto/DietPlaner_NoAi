@@ -10,14 +10,14 @@ public sealed class CategoryService : ICategoryService
     private readonly IDbContextFactory<AppDbContext> _dbFactory;
     private readonly SessionService _session;
     private readonly ILoggingService _logging;
-    private readonly IAuthorizationService _authorization;
+    private readonly ILocalizationService _loc;
 
-    public CategoryService(IDbContextFactory<AppDbContext> dbFactory, SessionService session, ILoggingService logging, IAuthorizationService authorization)
+    public CategoryService(IDbContextFactory<AppDbContext> dbFactory, SessionService session, ILoggingService logging, ILocalizationService loc)
     {
         _dbFactory = dbFactory;
         _session = session;
         _logging = logging;
-        _authorization = authorization;
+        _loc = loc;
     }
 
     public async Task<IReadOnlyList<Category>> GetAllAsync(bool includeInactive = false, CancellationToken cancellationToken = default)
@@ -34,7 +34,7 @@ public sealed class CategoryService : ICategoryService
         await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
         var normalized = name.Trim();
         if (await db.Categories.AnyAsync(x => x.Name.ToLower() == normalized.ToLower(), cancellationToken))
-            throw new InvalidOperationException("Категорія з такою назвою вже існує.");
+            throw new InvalidOperationException(_loc.GetString("Err_CategoryExists"));
 
         var category = new Category(normalized, description);
         db.Categories.Add(category);
@@ -48,7 +48,7 @@ public sealed class CategoryService : ICategoryService
         EnsureCanEditCatalog();
         await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
         var category = await db.Categories.SingleOrDefaultAsync(x => x.Id == id, cancellationToken)
-            ?? throw new KeyNotFoundException("Категорію не знайдено.");
+            ?? throw new KeyNotFoundException(_loc.GetString("Err_CategoryNotFound"));
         category.SetName(name);
         category.SetDescription(description);
         await db.SaveChangesAsync(cancellationToken);
@@ -60,7 +60,7 @@ public sealed class CategoryService : ICategoryService
         EnsureCanEditCatalog();
         await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
         var category = await db.Categories.SingleOrDefaultAsync(x => x.Id == id, cancellationToken)
-            ?? throw new KeyNotFoundException("Категорію не знайдено.");
+            ?? throw new KeyNotFoundException(_loc.GetString("Err_CategoryNotFound"));
         category.Deactivate();
         await db.SaveChangesAsync(cancellationToken);
         await _logging.LogActionAsync(_session.CurrentUser?.Id, ActionType.Delete, "Deactivated category", "Category", id, cancellationToken: cancellationToken);
@@ -69,6 +69,6 @@ public sealed class CategoryService : ICategoryService
     private void EnsureCanEditCatalog()
     {
         if (!_session.IsAuthenticated)
-            throw new UnauthorizedAccessException("Потрібен вхід для виконання цієї дії.");
+            throw new UnauthorizedAccessException(_loc.GetString("Err_Unauthorized"));
     }
 }

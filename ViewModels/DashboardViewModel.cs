@@ -42,8 +42,8 @@ public partial class DashboardViewModel : ViewModelBase
     private readonly IPlanService _planService;
     private readonly ILoggingService _loggingService;
     private readonly IOpenFoodFactsService _openFoodFactsService;
+    private readonly ILocalizationService _loc;
 
-    // Кеш для уникнення повторення рекомендованих перекусів
     private readonly HashSet<Guid> _excludedSuggestedIds = new();
     private readonly HashSet<string> _shownSuggestedNames = new(StringComparer.OrdinalIgnoreCase);
 
@@ -66,12 +66,11 @@ public partial class DashboardViewModel : ViewModelBase
     [ObservableProperty] private double _targetFats = 65;
     [ObservableProperty] private double _currentCarbs = 0;
     [ObservableProperty] private double _targetCarbs = 200;
-    [ObservableProperty] private string _caloriesDisplay = "0 / 2000 ккал";
-    [ObservableProperty] private string _proteinsDisplay = "0 / 150 г";
-    [ObservableProperty] private string _fatsDisplay = "0 / 65 г";
-    [ObservableProperty] private string _carbsDisplay = "0 / 200 г";
+    [ObservableProperty] private string _caloriesDisplay = string.Empty;
+    [ObservableProperty] private string _proteinsDisplay = string.Empty;
+    [ObservableProperty] private string _fatsDisplay = string.Empty;
+    [ObservableProperty] private string _carbsDisplay = string.Empty;
 
-    // --- ПЕРЕВИЩЕННЯ КБЖУ ТА ВОДИ ---
     [ObservableProperty] private bool _isCaloriesExceeded;
     [ObservableProperty] private bool _isFatsExceeded;
     [ObservableProperty] private bool _isCarbsExceeded;
@@ -97,16 +96,13 @@ public partial class DashboardViewModel : ViewModelBase
     [ObservableProperty] private FoodItemDisplayDto? _selectedSuggestedMeal;
     [ObservableProperty] private string _suggestedPortionGramsInput = "100";
     
-    // --- ПЛАН ТА РАЦІОНИ ---
     [ObservableProperty] private ObservableCollection<NutritionPlan> _availablePlans = new();
     [ObservableProperty] private NutritionPlan? _selectedPlan;
     [ObservableProperty] private NutritionPlan? _currentPlan;
 
-    // --- СТАН ФАКТИЧНО З'ЇДЕНОГО ---
     [ObservableProperty] private bool _hasEatenToday;
     [ObservableProperty] private bool _hasNoEatenToday = true;
 
-    // --- ЛІЧИЛЬНИК ВОДИ ---
     [ObservableProperty] private double _waterDrankLiters = 0.0;
     [ObservableProperty] private double _waterTargetLiters = 2.0;
     [ObservableProperty] private bool _isEditWaterTargetDialogOpen;
@@ -123,7 +119,8 @@ public partial class DashboardViewModel : ViewModelBase
         IDishService dishService,
         IPlanService planService,
         ILoggingService loggingService,
-        IOpenFoodFactsService openFoodFactsService)
+        IOpenFoodFactsService openFoodFactsService,
+        ILocalizationService loc)
     {
         _navigation = navigation;
         _auth = auth;
@@ -136,6 +133,9 @@ public partial class DashboardViewModel : ViewModelBase
         _planService = planService;
         _loggingService = loggingService;
         _openFoodFactsService = openFoodFactsService;
+        _loc = loc;
+
+        _loc.CultureChanged += (_, _) => _ = LoadDashboardDataAsync();
     }
     
     partial void OnSelectedPlanChanged(NutritionPlan? value)
@@ -193,14 +193,13 @@ public partial class DashboardViewModel : ViewModelBase
         var user = _auth.CurrentUser;
         if (user == null) return;
 
-        WelcomeText = $"Вітаємо, {user.DisplayName}!";
+        WelcomeText = string.Format(_loc.GetString("Dash_Welcome"), user.DisplayName);
 
-        // --- 1. АВТОМАТИЧНА СИНХРОНІЗАЦІЯ ІСТОРІЇ ПРИ ЗМІНІ ДНЯ ТА ЗАПУСКУ ---
         try
         {
             await _mealIntakeService.SyncPastDaysEatenItemsAsync(user.Id);
         }
-        catch { /* Ігноруємо помилки мережі/бази при старті */ }
+        catch { }
 
         try
         {
@@ -228,10 +227,10 @@ public partial class DashboardViewModel : ViewModelBase
         CurrentFats = intakes.Sum(x => x.Fats);
         CurrentCarbs = intakes.Sum(x => x.Carbs);
 
-        CaloriesDisplay = $"{CurrentCalories:F0} / {TargetCalories:F0} ккал";
-        ProteinsDisplay = $"{CurrentProteins:F1} / {TargetProteins:F1} г";
-        FatsDisplay = $"{CurrentFats:F1} / {TargetFats:F1} г";
-        CarbsDisplay = $"{CurrentCarbs:F1} / {TargetCarbs:F1} г";
+        CaloriesDisplay = string.Format(_loc.GetString("Dash_CaloriesDisplay"), CurrentCalories, TargetCalories);
+        ProteinsDisplay = string.Format(_loc.GetString("Dash_ProteinsDisplay"), CurrentProteins, TargetProteins);
+        FatsDisplay = string.Format(_loc.GetString("Dash_FatsDisplay"), CurrentFats, TargetFats);
+        CarbsDisplay = string.Format(_loc.GetString("Dash_CarbsDisplay"), CurrentCarbs, TargetCarbs);
 
         var currentSelectedId = SelectedPlan?.Id;
 
@@ -266,27 +265,27 @@ public partial class DashboardViewModel : ViewModelBase
         if (IsFatsExceeded)
         {
             var diff = CurrentFats - TargetFats;
-            warnings.Add($"жирів (+{diff:F1}г)");
+            warnings.Add(string.Format(_loc.GetString("Dash_WarnFats"), diff));
         }
         if (IsCaloriesExceeded)
         {
             var diff = CurrentCalories - TargetCalories;
-            warnings.Add($"калорій (+{diff:F0}ккал)");
+            warnings.Add(string.Format(_loc.GetString("Dash_WarnCalories"), diff));
         }
         if (IsCarbsExceeded)
         {
             var diff = CurrentCarbs - TargetCarbs;
-            warnings.Add($"вуглеводів (+{diff:F1}г)");
+            warnings.Add(string.Format(_loc.GetString("Dash_WarnCarbs"), diff));
         }
         if (WaterDrankLiters > WaterTargetLiters + 0.5)
         {
             var diffWater = WaterDrankLiters - WaterTargetLiters;
-            warnings.Add($"води (+{diffWater:F2}Л)");
+            warnings.Add(string.Format(_loc.GetString("Dash_WarnWater"), diffWater));
         }
 
         if (warnings.Count > 0)
         {
-            MacroWarningMessage = $"💡 Ви трохи орієнтовно перевищили ціль: {string.Join(", ", warnings)}. Це цілком нормально в межах тижневого балансу! За бажанням скоригуйте наступні прийоми їжі.";
+            MacroWarningMessage = string.Format(_loc.GetString("Dash_MacroWarning"), string.Join(", ", warnings));
         }
         else
         {
@@ -294,7 +293,7 @@ public partial class DashboardViewModel : ViewModelBase
         }
     }
 
-    private string GetWaterDirectory()
+    private static string GetWaterDirectory()
     {
         var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DietPlanner");
         Directory.CreateDirectory(dir);
@@ -350,12 +349,12 @@ public partial class DashboardViewModel : ViewModelBase
         try
         {
             await _mealIntakeService.RemoveIntakeItemByFoodAsync(user.Id, intake.ProductId, intake.DishId, intake.ItemName);
-            StatusMessage = $"🗑️ Видалено з прийомів їжі: {intake.ItemName}.";
+            StatusMessage = string.Format(_loc.GetString("Dash_IntakeDeleted"), intake.ItemName);
             await LoadDashboardDataAsync();
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Помилка видалення: {ex.Message}";
+            StatusMessage = string.Format(_loc.GetString("Dash_ErrDelete"), ex.Message);
         }
     }
 
@@ -372,11 +371,11 @@ public partial class DashboardViewModel : ViewModelBase
 
             if (WaterDrankLiters > 4.0)
             {
-                StatusMessage = $"⚠️ Увага! Випито {WaterDrankLiters:F2} Л води (надмірна кількість).";
+                StatusMessage = string.Format(_loc.GetString("Dash_WaterExcessWarning"), WaterDrankLiters);
             }
             else
             {
-                StatusMessage = $"💧 Додано {amount * 1000:F0} мл води. Всього випито: {WaterDrankLiters:F2} Л.";
+                StatusMessage = string.Format(_loc.GetString("Dash_WaterAdded"), amount * 1000, WaterDrankLiters);
             }
         }
     }
@@ -388,7 +387,7 @@ public partial class DashboardViewModel : ViewModelBase
         var user = _auth.CurrentUser;
         if (user != null) SaveWaterData(user.Id);
         CheckMacroExceedance();
-        StatusMessage = "💧 Лічильник випитої води скинуто.";
+        StatusMessage = _loc.GetString("Dash_WaterReset");
     }
 
     [RelayCommand]
@@ -411,34 +410,31 @@ public partial class DashboardViewModel : ViewModelBase
             var user = _auth.CurrentUser;
             if (user != null) SaveWaterData(user.Id);
             CheckMacroExceedance();
-            StatusMessage = $"Добову норму води оновлено до {WaterTargetLiters:F1} Л.";
+            StatusMessage = string.Format(_loc.GetString("Dash_WaterTargetUpdated"), WaterTargetLiters);
         }
         else
         {
-            StatusMessage = "Вкажіть коректну кількість літрів (більше 0).";
+            StatusMessage = _loc.GetString("Dash_ValidLitersRequired");
         }
     }
 
-    // --- ПОШУК ПЕРЕКУСІВ ЧЕРЕЗ API ЗА ПОШУКОВИМИ ТЕГАМИ УКРАЇНСЬКОЮ ТА АНГЛІЙСЬКОЮ ---
     [RelayCommand]
     private async Task SuggestMealAsync()
     {
         var user = _auth.CurrentUser;
         if (user == null) return;
 
-        StatusMessage = "🔍 Підбираємо перекуси з бази даних та OpenFoodFacts API...";
+        StatusMessage = _loc.GetString("Dash_SearchingSnacks");
 
-        // 1. Локальні варіанти з БД
         var localOptions = await _mealIntakeService.SuggestMealOptionsAsync(user.Id, limit: 15, excludeIds: _excludedSuggestedIds);
         localOptions ??= new List<FoodItemDisplayDto>();
 
         localOptions = localOptions.Where(o => !_shownSuggestedNames.Contains(o.Name)).ToList();
 
-        // 2. Запити до API за україномовними та загальними категоріями перекусів
         var apiOptions = new List<FoodItemDisplayDto>();
         try
         {
-            var searchTerms = new[] { "перекус", "снек", "горіхи", "печиво", "сухофрукти", "snack" };
+            var searchTerms = new[] { "snack", "nuts", "biscuit", "fruit" };
             
             foreach (var term in searchTerms)
             {
@@ -454,7 +450,7 @@ public partial class DashboardViewModel : ViewModelBase
                         {
                             Id = Guid.NewGuid(),
                             Name = $"🌐 {p.Name}",
-                            CategoryName = string.IsNullOrWhiteSpace(p.BrandOrCategory) ? "Перекус (OpenFoodFacts API)" : p.BrandOrCategory,
+                            CategoryName = string.IsNullOrWhiteSpace(p.BrandOrCategory) ? _loc.GetString("Dash_SnackApiCategory") : p.BrandOrCategory,
                             Calories = (double)p.Calories,
                             Proteins = (double)p.Proteins,
                             Fats = (double)p.Fats,
@@ -469,10 +465,8 @@ public partial class DashboardViewModel : ViewModelBase
         }
         catch
         {
-            // При відсутності мережі продовжуємо з локальною БД
         }
 
-        // 3. Об'єднання
         var combinedList = new List<FoodItemDisplayDto>();
         combinedList.AddRange(localOptions);
         combinedList.AddRange(apiOptions);
@@ -513,7 +507,7 @@ public partial class DashboardViewModel : ViewModelBase
             {
                 Id = p.Id,
                 Name = p.Name,
-                CategoryName = p.Category?.Name ?? "Перекус",
+                CategoryName = p.Category?.Name ?? _loc.GetString("Dash_SnackCategory"),
                 Calories = (double)p.Calories,
                 Proteins = (double)p.ProteinG,
                 Fats = (double)p.FatG,
@@ -530,7 +524,7 @@ public partial class DashboardViewModel : ViewModelBase
             }
             else
             {
-                StatusMessage = "Перекусів не знайдено.";
+                StatusMessage = _loc.GetString("Dash_SnacksNotFound");
             }
         }
     }
@@ -543,13 +537,13 @@ public partial class DashboardViewModel : ViewModelBase
     {
         if (SelectedSuggestedMeal == null)
         {
-            StatusMessage = "Оберіть варіант із запропонованого списку.";
+            StatusMessage = _loc.GetString("Dash_SelectSuggested");
             return;
         }
 
         if (!decimal.TryParse(SuggestedPortionGramsInput, out var amountGrams) || amountGrams <= 0)
         {
-            StatusMessage = "Вкажіть масу у грамах більше 0.";
+            StatusMessage = _loc.GetString("Dash_EnterGramsValid");
             return;
         }
 
@@ -574,7 +568,7 @@ public partial class DashboardViewModel : ViewModelBase
                     var newProduct = await _productService.CreateAsync(
                         cleanName,
                         defaultCategoryId,
-                        "Перекус із OpenFoodFacts API",
+                        _loc.GetString("Dash_SnackApiDescription"),
                         NutritionBasis.Per100Grams,
                         100m,
                         (decimal)SelectedSuggestedMeal.Calories,
@@ -596,7 +590,7 @@ public partial class DashboardViewModel : ViewModelBase
         await _mealIntakeService.AddIntakeItemAsync(user.Id, productId, dishId, amountGrams);
 
         IsSuggestMealDialogOpen = false;
-        StatusMessage = $"Зараховано в прийоми їжі: {SelectedSuggestedMeal.Name} ({amountGrams:F0}г).";
+        StatusMessage = string.Format(_loc.GetString("Dash_ItemAdded"), SelectedSuggestedMeal.Name, amountGrams);
         await LoadDashboardDataAsync();
     }
 
@@ -617,12 +611,12 @@ public partial class DashboardViewModel : ViewModelBase
             var filePath = await _reportService.GenerateUserReportAsync(user.Id);
             if (!string.IsNullOrEmpty(filePath))
             {
-                StatusMessage = $"📄 Звіт успішно збережено у файл: {filePath}";
+                StatusMessage = string.Format(_loc.GetString("Dash_ReportSaved"), filePath);
             }
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Помилка експорту: {ex.Message}";
+            StatusMessage = string.Format(_loc.GetString("Dash_ErrExport"), ex.Message);
         }
     }
 
@@ -635,12 +629,12 @@ public partial class DashboardViewModel : ViewModelBase
         try
         {
             await _undoService.UndoLastActionAsync();
-            StatusMessage = "↩️ Останню дію успішно скасовано.";
+            StatusMessage = _loc.GetString("Dash_UndoSuccess");
             await LoadDashboardDataAsync();
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Не вдалося скасувати дію: {ex.Message}";
+            StatusMessage = string.Format(_loc.GetString("Dash_UndoError"), ex.Message);
         }
     }
 
@@ -656,12 +650,12 @@ public partial class DashboardViewModel : ViewModelBase
         {
             await _mealIntakeService.AddIntakeItemAsync(user.Id, item.ProductId, item.DishId, (decimal)item.PortionGrams);
             item.IsEaten = true;
-            StatusMessage = $"Зараховано в прийоми їжі: {item.ItemName} ({item.PortionGrams:F0}г).";
+            StatusMessage = string.Format(_loc.GetString("Dash_ItemAdded"), item.ItemName, item.PortionGrams);
             await LoadDashboardDataAsync();
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Помилка збереження: {ex.Message}";
+            StatusMessage = string.Format(_loc.GetString("Dash_ErrSave"), ex.Message);
         }
     }
 
@@ -672,8 +666,8 @@ public partial class DashboardViewModel : ViewModelBase
         var items = products.Select(p => new FoodItemDisplayDto
         {
             Id = p.Id,
-            Name = $"{p.Name} ({p.Calories:F0} ккал/100г)",
-            CategoryName = p.Category?.Name ?? "Продукт",
+            Name = $"{p.Name} ({p.Calories:F0} {_loc.GetString("Unit_Kcal")}/100{_loc.GetString("Unit_Grams")})",
+            CategoryName = p.Category?.Name ?? _loc.GetString("Meal_ProductCategoryDefault"),
             Calories = (double)p.Calories,
             Proteins = (double)p.ProteinG,
             Fats = (double)p.FatG,
@@ -688,8 +682,8 @@ public partial class DashboardViewModel : ViewModelBase
             items.Add(new FoodItemDisplayDto
             {
                 Id = d.Id,
-                Name = $"[Страва] {d.Name} ({nutrition.Calories:F0} ккал/100г)",
-                CategoryName = d.Category?.Name ?? "Страва",
+                Name = $"[{_loc.GetString("Meal_DishCategoryDefault")}] {d.Name} ({nutrition.Calories:F0} {_loc.GetString("Unit_Kcal")}/100{_loc.GetString("Unit_Grams")})",
+                CategoryName = d.Category?.Name ?? _loc.GetString("Meal_DishCategoryDefault"),
                 Calories = (double)nutrition.Calories,
                 Proteins = (double)nutrition.ProteinG,
                 Fats = (double)nutrition.FatG,
@@ -712,13 +706,13 @@ public partial class DashboardViewModel : ViewModelBase
     {
         if (SelectedFoodItem == null)
         {
-            StatusMessage = "Оберіть продукт або страву зі списку.";
+            StatusMessage = _loc.GetString("Dash_SelectProductOrDish");
             return;
         }
 
         if (!decimal.TryParse(PortionGramsInput, out var amountGrams) || amountGrams <= 0)
         {
-            StatusMessage = "Вкажіть коректну масу у грамах (більше 0).";
+            StatusMessage = _loc.GetString("Dash_EnterGramsValid");
             return;
         }
 
@@ -731,7 +725,7 @@ public partial class DashboardViewModel : ViewModelBase
         await _mealIntakeService.AddIntakeItemAsync(user.Id, productId, dishId, amountGrams);
 
         IsAddMealDialogOpen = false;
-        StatusMessage = $"Додано прийом їжі: {SelectedFoodItem.Name} ({amountGrams}г).";
+        StatusMessage = string.Format(_loc.GetString("Dash_MealAdded"), SelectedFoodItem.Name, amountGrams);
         await LoadDashboardDataAsync();
     }
 
@@ -751,19 +745,19 @@ public partial class DashboardViewModel : ViewModelBase
             if (!item.IsEaten)
             {
                 await _mealIntakeService.AddIntakeItemAsync(user.Id, item.ProductId, item.DishId, (decimal)item.PortionGrams);
-                StatusMessage = $"Зараховано в прийоми їжі: {item.ItemName} ({item.PortionGrams:F0}г).";
+                StatusMessage = string.Format(_loc.GetString("Dash_ItemAdded"), item.ItemName, item.PortionGrams);
             }
             else
             {
                 await _mealIntakeService.RemoveIntakeItemByFoodAsync(user.Id, item.ProductId, item.DishId, item.ItemName);
-                StatusMessage = $"Скасовано позначку для: {item.ItemName}.";
+                StatusMessage = string.Format(_loc.GetString("Dash_MarkUnchecked"), item.ItemName);
             }
 
             await LoadDashboardDataAsync();
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Помилка збереження: {ex.Message}";
+            StatusMessage = string.Format(_loc.GetString("Dash_ErrSave"), ex.Message);
         }
     }
 }

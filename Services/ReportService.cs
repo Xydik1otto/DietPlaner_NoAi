@@ -11,12 +11,14 @@ public class ReportService : IReportService
 {
     private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
     private readonly INutritionCalculator _calculator;
+    private readonly ILocalizationService _loc;
     private const int MaxReportFiles = 30;
 
-    public ReportService(IDbContextFactory<AppDbContext> dbContextFactory, INutritionCalculator calculator)
+    public ReportService(IDbContextFactory<AppDbContext> dbContextFactory, INutritionCalculator calculator, ILocalizationService loc)
     {
         _dbContextFactory = dbContextFactory;
         _calculator = calculator;
+        _loc = loc;
     }
 
     public async Task<string> GenerateUserReportAsync(Guid userId, CancellationToken cancellationToken = default)
@@ -33,7 +35,6 @@ public class ReportService : IReportService
         }
         catch
         {
-            // Якщо профіль ще не заповнений повністю
         }
 
         var today = DateTime.UtcNow.Date;
@@ -44,28 +45,28 @@ public class ReportService : IReportService
 
         var sb = new StringBuilder();
         sb.AppendLine("==================================================");
-        sb.AppendLine("           ЗВІТ ХАРЧУВАННЯ — DietPlanner          ");
+        sb.AppendLine(_loc.GetString("Rpt_HeaderTitle"));
         sb.AppendLine("==================================================");
-        sb.AppendLine($"Дата генерації: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
-        sb.AppendLine($"Користувач: {user.DisplayName} ({user.Email})");
+        sb.AppendLine($"{_loc.GetString("Rpt_GenDate")}: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+        sb.AppendLine($"{_loc.GetString("Rpt_User")}: {user.DisplayName} ({user.Email})");
         
         if (calc.HasValue)
         {
-            sb.AppendLine($"Вага: {user.WeightKg} кг | Зріст: {user.HeightCm} см | ІМТ: {calc.Value.BodyMassIndex:F1}");
+            sb.AppendLine(string.Format(_loc.GetString("Rpt_BodyMetrics"), user.WeightKg, user.HeightCm, calc.Value.BodyMassIndex));
             sb.AppendLine("--------------------------------------------------");
-            sb.AppendLine($"ДОБОВА ЦІЛЬ: {calc.Value.Targets.Calories:F0} ккал");
-            sb.AppendLine($"Білки: {calc.Value.Targets.ProteinG:F1}г | Жири: {calc.Value.Targets.FatG:F1}г | Вуглеводи: {calc.Value.Targets.CarbsG:F1}г");
+            sb.AppendLine($"{_loc.GetString("Rpt_DailyTarget")}: {calc.Value.Targets.Calories:F0} {_loc.GetString("Unit_Kcal")}");
+            sb.AppendLine(string.Format(_loc.GetString("Rpt_MacrosTarget"), calc.Value.Targets.ProteinG, calc.Value.Targets.FatG, calc.Value.Targets.CarbsG));
         }
 
         sb.AppendLine("==================================================");
-        sb.AppendLine("СПИСОК ПРИЙОМІВ ЇЖІ ЗА СЬОГОДНІ:");
+        sb.AppendLine(_loc.GetString("Rpt_TodayIntakesHeader"));
 
         decimal totalCal = 0, totalP = 0, totalF = 0, totalC = 0;
         foreach (var intake in todayIntakes)
         {
             foreach (var item in intake.Items)
             {
-                sb.AppendLine($"- [{intake.ConsumedAtUtc.ToLocalTime():HH:mm}] {item.ItemName} ({item.Amount:F0}г) — {item.Calories:F0} ккал (Б:{item.ProteinG:F1}г, Ж:{item.FatG:F1}г, В:{item.CarbsG:F1}г)");
+                sb.AppendLine($"- [{intake.ConsumedAtUtc.ToLocalTime():HH:mm}] {item.ItemName} ({item.Amount:F0}{_loc.GetString("Unit_Grams")}) — {item.Calories:F0} {_loc.GetString("Unit_Kcal")} (Б:{item.ProteinG:F1}г, Ж:{item.FatG:F1}г, В:{item.CarbsG:F1}г)");
                 totalCal += item.Calories;
                 totalP += item.ProteinG;
                 totalF += item.FatG;
@@ -74,7 +75,7 @@ public class ReportService : IReportService
         }
 
         sb.AppendLine("--------------------------------------------------");
-        sb.AppendLine($"ФАКТИЧНО СБАТУРАНО: {totalCal:F0} ккал | Б:{totalP:F1}г | Ж:{totalF:F1}г | В:{totalC:F1}г");
+        sb.AppendLine(string.Format(_loc.GetString("Rpt_FactSummary"), totalCal, totalP, totalF, totalC));
         sb.AppendLine("==================================================");
 
         var reportsFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Reports");
@@ -108,7 +109,6 @@ public class ReportService : IReportService
         }
         catch
         {
-            // Ігноруємо помилки видалення
         }
     }
 }

@@ -9,11 +9,13 @@ public sealed class RestrictionService : IRestrictionService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory;
     private readonly ILoggingService _logging;
+    private readonly ILocalizationService _loc;
 
-    public RestrictionService(IDbContextFactory<AppDbContext> dbFactory, ILoggingService logging)
+    public RestrictionService(IDbContextFactory<AppDbContext> dbFactory, ILoggingService logging, ILocalizationService loc)
     {
         _dbFactory = dbFactory;
         _logging = logging;
+        _loc = loc;
     }
 
     public async Task<IReadOnlyList<DietaryRestriction>> GetAvailableAsync(CancellationToken cancellationToken = default)
@@ -30,7 +32,6 @@ public sealed class RestrictionService : IRestrictionService
 
     public async Task SetUserRestrictionsAsync(Guid userId, IEnumerable<Guid> restrictionIds, CancellationToken cancellationToken = default)
     {
-        // Матеріалізуємо колекцію в List одразу, щоб уникнути помилок інтерпретатора EF Core
         var idsList = restrictionIds?.ToList() ?? new List<Guid>();
 
         await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
@@ -39,11 +40,9 @@ public sealed class RestrictionService : IRestrictionService
             .Where(ur => ur.UserId == userId)
             .ToListAsync(cancellationToken);
 
-        // Видаляємо ті, яких немає в новому списку
         var toRemove = existing.Where(ur => !idsList.Contains(ur.DietaryRestrictionId)).ToList();
         db.UserRestrictions.RemoveRange(toRemove);
 
-        // Додаємо нові
         var existingIds = existing.Select(ur => ur.DietaryRestrictionId).ToHashSet();
         foreach (var id in idsList)
         {
@@ -60,7 +59,7 @@ public sealed class RestrictionService : IRestrictionService
     {
         await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
         var product = await db.Products.AsNoTracking().SingleOrDefaultAsync(x => x.Id == productId && x.IsActive, cancellationToken)
-            ?? throw new KeyNotFoundException("Продукт не знайдено.");
+            ?? throw new KeyNotFoundException(_loc.GetString("Err_ProductNotFound"));
         var restriction = await db.DietaryRestrictions.OfType<ForbiddenProductRestriction>().SingleOrDefaultAsync(x => x.ProductId == productId, cancellationToken);
         if (restriction is null)
         {
@@ -94,21 +93,21 @@ public sealed class RestrictionService : IRestrictionService
         foreach (var restriction in restrictions)
         {
             if (!restriction.Allows(product))
-                return new RestrictionCheckResult(false, $"Продукт «{product.Name}» не дозволений обмеженням «{restriction.Name}».");
+                return new RestrictionCheckResult(false, string.Format(_loc.GetString("Restr_ProductNotAllowed"), product.Name, restriction.Name));
         }
-        return new RestrictionCheckResult(true, "Продукт дозволений.");
+        return new RestrictionCheckResult(true, _loc.GetString("Restr_ProductAllowed"));
     }
 
     public async Task<RestrictionCheckResult> CheckDishAsync(Guid userId, Dish dish, CancellationToken cancellationToken = default)
     {
         var ingredients = dish.Ingredients.ToList();
-        if (ingredients.Count == 0) return new RestrictionCheckResult(false, $"Страва «{dish.Name}» не містить продуктів.");
+        if (ingredients.Count == 0) return new RestrictionCheckResult(false, string.Format(_loc.GetString("Restr_DishNoProducts"), dish.Name));
         foreach (var ingredient in ingredients)
         {
-            if (ingredient.Product is null) return new RestrictionCheckResult(false, "Для одного з інгредієнтів не завантажено продукт.");
+            if (ingredient.Product is null) return new RestrictionCheckResult(false, _loc.GetString("Restr_IngredientNoProduct"));
             var result = await CheckProductAsync(userId, ingredient.Product, cancellationToken);
-            if (!result.Allowed) return new RestrictionCheckResult(false, $"Страва «{dish.Name}»: {result.Reason}");
+            if (!result.Allowed) return new RestrictionCheckResult(false, string.Format(_loc.GetString("Restr_DishReason"), dish.Name, result.Reason));
         }
-        return new RestrictionCheckResult(true, "Страва дозволена.");
+        return new RestrictionCheckResult(true, _loc.GetString("Restr_DishAllowed"));
     }
 }

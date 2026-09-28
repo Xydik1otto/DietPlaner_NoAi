@@ -11,6 +11,7 @@ public class PlanService : IPlanService
     private readonly INutritionCalculator _calculator;
     private readonly IRestrictionService _restrictionService;
     private readonly ILoggingService _logging;
+    private readonly ILocalizationService _loc;
 
     private readonly record struct MealSlot(MealType MealType, string MealName, decimal TargetCalories);
 
@@ -34,12 +35,14 @@ public class PlanService : IPlanService
         IDbContextFactory<AppDbContext> dbContextFactory,
         INutritionCalculator calculator,
         IRestrictionService restrictionService,
-        ILoggingService logging)
+        ILoggingService logging,
+        ILocalizationService loc)
     {
         _dbContextFactory = dbContextFactory;
         _calculator = calculator;
         _restrictionService = restrictionService;
         _logging = logging;
+        _loc = loc;
     }
 
     public async Task<PlanGenerationResult> GenerateAsync(Guid userId, int mealCount, decimal? targetCalories = null, CancellationToken cancellationToken = default)
@@ -97,7 +100,7 @@ public class PlanService : IPlanService
         var user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
         if (user == null)
         {
-            return new PlanGenerationResult(false, "Користувача не знайдено.", null, null, Array.Empty<string>());
+            return new PlanGenerationResult(false, _loc.GetString("Err_UserNotFound"), null, null, Array.Empty<string>());
         }
 
         NutritionCalculation calculation;
@@ -137,8 +140,8 @@ public class PlanService : IPlanService
         {
             return new PlanGenerationResult(
                 false,
-                "Неможливо сформувати план: відсутні доступні страви та продукти.",
-                null, null, new[] { "Додайте страви в каталог." });
+                _loc.GetString("Plan_NoItemsError"),
+                null, null, new[] { _loc.GetString("Plan_AddDishesHint") });
         }
 
         var candidates = new List<CandidateItem>();
@@ -184,15 +187,12 @@ public class PlanService : IPlanService
         var plan = new NutritionPlan(userId, planDate, mealCount, targets);
         var dailyUsedIds = new HashSet<Guid>();
 
-        // Формування слотів
         while (slotQueue.Count > 0)
         {
             var slot = slotQueue.Dequeue();
 
-            // Для основних прийомів їжі (Сніданок, Обід, Вечеря) формуємо Комбо-Тарілку з кількох продуктів або 1 готову страву
             if (slot.MealType != MealType.Snack && candidates.Any(c => c.Role == FoodRole.Protein) && candidates.Any(c => c.Role == FoodRole.CarbGarnish))
             {
-                // 40% шанс вибрати повноцінну готову страву (якщо вона є)
                 var fullDishes = candidates.Where(c => c.IsDish).ToList();
                 if (fullDishes.Count > 0 && Random.Shared.NextDouble() < 0.4)
                 {
@@ -200,13 +200,11 @@ public class PlanService : IPlanService
                 }
                 else
                 {
-                    // Формуємо Комбо-Тарілку: Білок + Гарнір + Овочі
                     AssembleComboPlate(plan, slot, candidates, dailyUsedIds, globalUsedCandidateIds);
                 }
             }
             else
             {
-                // Для перекусів та за відсутності вибору обираємо 1 відповідний продукт/страву з адекватним обмеженням маси
                 AddSingleCandidateToPlan(plan, slot, SelectBestCandidate(candidates, slot, dailyUsedIds, globalUsedCandidateIds), dailyUsedIds, globalUsedCandidateIds);
             }
         }
@@ -217,7 +215,7 @@ public class PlanService : IPlanService
         await _logging.LogActionAsync(
             userId,
             ActionType.Create,
-            $"Сформовано план харчування на {plan.PlanDate:yyyy-MM-dd} ({mealCount} прийомів, {effectiveCalories:F0} ккал).",
+            string.Format(_loc.GetString("Plan_LogCreated"), plan.PlanDate, mealCount, effectiveCalories),
             entityName: nameof(NutritionPlan),
             entityId: plan.Id,
             cancellationToken: cancellationToken);
@@ -227,7 +225,7 @@ public class PlanService : IPlanService
 
         return new PlanGenerationResult(
             true,
-            $"План на {planDate:dd.MM.yyyy} успішно згенеровано! Ціль: ~{effectiveCalories:F0} ккал.",
+            string.Format(_loc.GetString("Plan_GenSuccess"), planDate, effectiveCalories),
             loadedPlan,
             deviation,
             Array.Empty<string>());
@@ -239,7 +237,8 @@ public class PlanService : IPlanService
 
         if (nameLower.Contains("броколі") || nameLower.Contains("огірок") || nameLower.Contains("томат") || 
             nameLower.Contains("помідор") || nameLower.Contains("салат") || nameLower.Contains("капуста") || 
-            nameLower.Contains("яблуко") || nameLower.Contains("перець"))
+            nameLower.Contains("яблуко") || nameLower.Contains("перець") || nameLower.Contains("broccoli") ||
+            nameLower.Contains("cucumber") || nameLower.Contains("tomato") || nameLower.Contains("apple"))
         {
             return FoodRole.Veggie;
         }
@@ -257,14 +256,13 @@ public class PlanService : IPlanService
         return FoodRole.General;
     }
 
-    private static void AssembleComboPlate(
+    private void AssembleComboPlate(
         NutritionPlan plan, 
         MealSlot slot, 
         List<CandidateItem> candidates, 
         HashSet<Guid> dailyUsedIds, 
         HashSet<Guid> globalUsedIds)
     {
-        // Розподіл калорій слота: ~40% Білок, ~45% Гарнір, ~15% Овочі
         decimal proteinTargetCal = slot.TargetCalories * 0.40m;
         decimal carbTargetCal = slot.TargetCalories * 0.45m;
         decimal veggieTargetCal = slot.TargetCalories * 0.15m;
@@ -273,7 +271,6 @@ public class PlanService : IPlanService
         var carbs = candidates.Where(c => c.Role == FoodRole.CarbGarnish || c.BaseCarbs100g >= 18m).ToList();
         var veggies = candidates.Where(c => c.Role == FoodRole.Veggie || c.BaseCalories100g < 100m).ToList();
 
-        // 1. Білок
         if (proteins.Count > 0)
         {
             var bestProtein = SelectBestCandidate(proteins, slot, dailyUsedIds, globalUsedIds);
@@ -281,7 +278,6 @@ public class PlanService : IPlanService
             AddPlanItem(plan, slot, bestProtein, portion, dailyUsedIds, globalUsedIds);
         }
 
-        // 2. Гарнір
         if (carbs.Count > 0)
         {
             var bestCarb = SelectBestCandidate(carbs, slot, dailyUsedIds, globalUsedIds);
@@ -289,7 +285,6 @@ public class PlanService : IPlanService
             AddPlanItem(plan, slot, bestCarb, portion, dailyUsedIds, globalUsedIds);
         }
 
-        // 3. Овочі / Салат
         if (veggies.Count > 0)
         {
             var bestVeggie = SelectBestCandidate(veggies, slot, dailyUsedIds, globalUsedIds);
@@ -298,7 +293,7 @@ public class PlanService : IPlanService
         }
     }
 
-    private static void AddSingleCandidateToPlan(
+    private void AddSingleCandidateToPlan(
         NutritionPlan plan, 
         MealSlot slot, 
         CandidateItem candidate, 
@@ -312,7 +307,7 @@ public class PlanService : IPlanService
         AddPlanItem(plan, slot, candidate, portionGrams, dailyUsedIds, globalUsedIds);
     }
 
-    private static void AddPlanItem(
+    private void AddPlanItem(
         NutritionPlan plan, 
         MealSlot slot, 
         CandidateItem candidate, 
@@ -336,7 +331,7 @@ public class PlanService : IPlanService
             candidate.Product?.Id,
             candidate.Dish?.Id,
             portionGrams,
-            "г",
+            _loc.GetString("Unit_Grams"),
             nutrition));
     }
 
@@ -420,38 +415,45 @@ public class PlanService : IPlanService
         return true;
     }
 
-    private static Queue<MealSlot> BuildMealQueue(int mealCount, decimal totalCalories)
+    private Queue<MealSlot> BuildMealQueue(int mealCount, decimal totalCalories)
     {
         var queue = new Queue<MealSlot>();
         mealCount = Math.Clamp(mealCount, 3, 6);
 
+        var breakfast = _loc.GetString("Meal_Breakfast");
+        var lunch = _loc.GetString("Meal_Lunch");
+        var dinner = _loc.GetString("Meal_Dinner");
+        var snack = _loc.GetString("Meal_Snack");
+        var secondBreakfast = _loc.GetString("Meal_SecondBreakfast");
+        var lateDinner = _loc.GetString("Meal_LateDinner");
+
         switch (mealCount)
         {
             case 3:
-                queue.Enqueue(new MealSlot(MealType.Breakfast, "Сніданок", totalCalories * 0.30m));
-                queue.Enqueue(new MealSlot(MealType.Lunch, "Обід", totalCalories * 0.40m));
-                queue.Enqueue(new MealSlot(MealType.Dinner, "Вечеря", totalCalories * 0.30m));
+                queue.Enqueue(new MealSlot(MealType.Breakfast, breakfast, totalCalories * 0.30m));
+                queue.Enqueue(new MealSlot(MealType.Lunch, lunch, totalCalories * 0.40m));
+                queue.Enqueue(new MealSlot(MealType.Dinner, dinner, totalCalories * 0.30m));
                 break;
             case 4:
-                queue.Enqueue(new MealSlot(MealType.Breakfast, "Сніданок", totalCalories * 0.25m));
-                queue.Enqueue(new MealSlot(MealType.Lunch, "Обід", totalCalories * 0.35m));
-                queue.Enqueue(new MealSlot(MealType.Snack, "Полуденок", totalCalories * 0.15m));
-                queue.Enqueue(new MealSlot(MealType.Dinner, "Вечеря", totalCalories * 0.25m));
+                queue.Enqueue(new MealSlot(MealType.Breakfast, breakfast, totalCalories * 0.25m));
+                queue.Enqueue(new MealSlot(MealType.Lunch, lunch, totalCalories * 0.35m));
+                queue.Enqueue(new MealSlot(MealType.Snack, snack, totalCalories * 0.15m));
+                queue.Enqueue(new MealSlot(MealType.Dinner, dinner, totalCalories * 0.25m));
                 break;
             case 5:
-                queue.Enqueue(new MealSlot(MealType.Breakfast, "Сніданок", totalCalories * 0.20m));
-                queue.Enqueue(new MealSlot(MealType.Snack, "Другий сніданок", totalCalories * 0.10m));
-                queue.Enqueue(new MealSlot(MealType.Lunch, "Обід", totalCalories * 0.35m));
-                queue.Enqueue(new MealSlot(MealType.Snack, "Полуденок", totalCalories * 0.10m));
-                queue.Enqueue(new MealSlot(MealType.Dinner, "Вечеря", totalCalories * 0.25m));
+                queue.Enqueue(new MealSlot(MealType.Breakfast, breakfast, totalCalories * 0.20m));
+                queue.Enqueue(new MealSlot(MealType.Snack, secondBreakfast, totalCalories * 0.10m));
+                queue.Enqueue(new MealSlot(MealType.Lunch, lunch, totalCalories * 0.35m));
+                queue.Enqueue(new MealSlot(MealType.Snack, snack, totalCalories * 0.10m));
+                queue.Enqueue(new MealSlot(MealType.Dinner, dinner, totalCalories * 0.25m));
                 break;
             case 6:
-                queue.Enqueue(new MealSlot(MealType.Breakfast, "Сніданок", totalCalories * 0.20m));
-                queue.Enqueue(new MealSlot(MealType.Snack, "Другий сніданок", totalCalories * 0.10m));
-                queue.Enqueue(new MealSlot(MealType.Lunch, "Обід", totalCalories * 0.30m));
-                queue.Enqueue(new MealSlot(MealType.Snack, "Полуденок", totalCalories * 0.10m));
-                queue.Enqueue(new MealSlot(MealType.Dinner, "Вечеря", totalCalories * 0.20m));
-                queue.Enqueue(new MealSlot(MealType.Snack, "Пізня вечеря", totalCalories * 0.10m));
+                queue.Enqueue(new MealSlot(MealType.Breakfast, breakfast, totalCalories * 0.20m));
+                queue.Enqueue(new MealSlot(MealType.Snack, secondBreakfast, totalCalories * 0.10m));
+                queue.Enqueue(new MealSlot(MealType.Lunch, lunch, totalCalories * 0.30m));
+                queue.Enqueue(new MealSlot(MealType.Snack, snack, totalCalories * 0.10m));
+                queue.Enqueue(new MealSlot(MealType.Dinner, dinner, totalCalories * 0.20m));
+                queue.Enqueue(new MealSlot(MealType.Snack, lateDinner, totalCalories * 0.10m));
                 break;
         }
 

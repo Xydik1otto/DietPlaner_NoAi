@@ -14,30 +14,42 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
+                <!-- Заголовок -->
                 <StackPanel Grid.Row="0">
                     <TextBlock Text="{DynamicResource Prof_Title}" Style="{StaticResource PageTitleTextStyle}" />
-                    <TextBlock Text="Основна інформація, параметри розрахунку та дієтичні обмеження." Style="{StaticResource PageSubtitleTextStyle}" Margin="0,4,0,0" />
+                    <TextBlock Text="{DynamicResource Prof_Subtitle}" Style="{StaticResource PageSubtitleTextStyle}" Margin="0,4,0,0" />
                 </StackPanel>
 
-                <!-- Статус облікового запису -->
+                <!-- Обліковий запис, Статус та Налаштування мови -->
                 <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="0,20,0,12">
                     <WrapPanel Margin="-8">
-                        <StackPanel Width="280" Margin="8">
-                            <TextBlock Text="Ваш обліковий запис" Style="{StaticResource SectionTitleTextStyle}" />
+                        <StackPanel Width="260" Margin="8">
+                            <TextBlock Text="{DynamicResource Prof_AccountCard}" Style="{StaticResource SectionTitleTextStyle}" />
                             <TextBlock Text="{DynamicResource Prof_CurrentEmail}" Style="{StaticResource LabelTextStyle}" Margin="0,10,0,2" />
                             <TextBlock Text="{Binding Email}" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
                         </StackPanel>
-                        <StackPanel Width="280" Margin="8">
-                            <TextBlock Text="Статус профілю" Style="{StaticResource SectionTitleTextStyle}" />
+                        
+                        <StackPanel Width="260" Margin="8">
+                            <TextBlock Text="{DynamicResource Prof_StatusCard}" Style="{StaticResource SectionTitleTextStyle}" />
                             <TextBlock Text="{Binding StatusMessage}" Foreground="{StaticResource AccentBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,10,0,0" />
+                        </StackPanel>
+
+                        <!-- Перемикач мови інтерфейсу -->
+                        <StackPanel Width="260" Margin="8">
+                            <TextBlock Text="{DynamicResource Prof_AppSettings}" Style="{StaticResource SectionTitleTextStyle}" />
+                            <TextBlock Text="{DynamicResource Nav_Language}" Style="{StaticResource LabelTextStyle}" Margin="0,10,0,2" />
+                            <ComboBox ItemsSource="{Binding AvailableLanguages}" 
+                                      SelectedItem="{Binding SelectedLanguage}" 
+                                      DisplayMemberPath="NativeName" 
+                                      Style="{StaticResource AppComboBoxStyle}" />
                         </StackPanel>
                     </WrapPanel>
                 </Border>
 
-                <!-- Персональні параметри (Вирівняна сітка) -->
+                <!-- Персональні параметри -->
                 <Border Grid.Row="2" Style="{StaticResource CardStyle}" Margin="0,0,0,12">
                     <StackPanel>
-                        <TextBlock Text="Персональні параметри" Style="{StaticResource SectionTitleTextStyle}" />
+                        <TextBlock Text="{DynamicResource Prof_PersonalParams}" Style="{StaticResource SectionTitleTextStyle}" />
                         
                         <Grid Margin="0,16,0,0">
                             <Grid.ColumnDefinitions>
@@ -81,18 +93,27 @@
 
                             <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,0,0,14">
                                 <TextBlock Text="{DynamicResource Prof_Activity}" Style="{StaticResource LabelTextStyle}" />
-                                <ComboBox ItemsSource="{Binding ActivityLevels}" SelectedItem="{Binding ActivityLevel}" Style="{StaticResource AppComboBoxStyle}" />
+                                <ComboBox ItemsSource="{Binding ActivityLevels}" 
+                                          SelectedItem="{Binding SelectedActivityLevel}" 
+                                          DisplayMemberPath="DisplayName" 
+                                          Style="{StaticResource AppComboBoxStyle}" />
                             </StackPanel>
 
                             <!-- Рядок 3: Стать | Ціль харчування -->
                             <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,0,0">
                                 <TextBlock Text="{DynamicResource Prof_Sex}" Style="{StaticResource LabelTextStyle}" />
-                                <ComboBox ItemsSource="{Binding Sexes}" SelectedItem="{Binding Sex}" Style="{StaticResource AppComboBoxStyle}" />
+                                <ComboBox ItemsSource="{Binding Sexes}" 
+                                          SelectedItem="{Binding SelectedSex}" 
+                                          DisplayMemberPath="DisplayName" 
+                                          Style="{StaticResource AppComboBoxStyle}" />
                             </StackPanel>
 
                             <StackPanel Grid.Row="2" Grid.Column="2" Margin="0,0,0,0">
                                 <TextBlock Text="{DynamicResource Prof_Goal}" Style="{StaticResource LabelTextStyle}" />
-                                <ComboBox ItemsSource="{Binding NutritionGoals}" SelectedItem="{Binding Goal}" Style="{StaticResource AppComboBoxStyle}" />
+                                <ComboBox ItemsSource="{Binding Goals}" 
+                                          SelectedItem="{Binding SelectedGoal}" 
+                                          DisplayMemberPath="DisplayName" 
+                                          Style="{StaticResource AppComboBoxStyle}" />
                             </StackPanel>
                         </Grid>
                     </StackPanel>
@@ -102,7 +123,7 @@
                 <Border Grid.Row="3" Style="{StaticResource CardStyle}" Margin="0,0,0,16">
                     <StackPanel>
                         <TextBlock Text="{DynamicResource Prof_Restrictions}" Style="{StaticResource SectionTitleTextStyle}" />
-                        <TextBlock Text="Познач обмеження, які мають враховуватися під час формування раціону." Style="{StaticResource PageSubtitleTextStyle}" Margin="0,4,0,12" TextWrapping="Wrap" />
+                        <TextBlock Text="{DynamicResource Prof_RestrictionsDesc}" Style="{StaticResource PageSubtitleTextStyle}" Margin="0,4,0,12" TextWrapping="Wrap" />
                         
                         <ItemsControl ItemsSource="{Binding Restrictions}">
                             <ItemsControl.ItemTemplate>
@@ -121,6 +142,7 @@
                     </StackPanel>
                 </Border>
 
+                <!-- Кнопки дій -->
                 <StackPanel Grid.Row="4" Orientation="Horizontal">
                     <Button Content="{DynamicResource Prof_SaveProfile}" Command="{Binding SaveCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" />
                     <Button Content="{DynamicResource Btn_Back}" Command="{Binding BackCommand}" Style="{StaticResource SecondaryButtonStyle}" />

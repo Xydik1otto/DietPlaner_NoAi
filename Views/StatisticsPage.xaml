@@ -1,7 +1,7 @@
 <Page x:Class="DietPlanner.Views.StatisticsPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      Title="Статистика харчування">
+      Title="{DynamicResource Nav_Statistics}">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <Border Padding="{StaticResource PagePadding}" MaxWidth="1000" HorizontalAlignment="Left">
@@ -13,50 +13,40 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <!-- Заголовок -->
                 <StackPanel Grid.Row="0" Margin="0,0,0,18">
-                    <TextBlock Text="📈 Статистика та Аналітика" Style="{StaticResource PageTitleTextStyle}"/>
-                    <TextBlock Text="Відстежуйте споживання калорій та макронутрієнтів по днях, тижнях або за місяць." 
+                    <TextBlock Text="{DynamicResource Stat_PageTitle}" Style="{StaticResource PageTitleTextStyle}"/>
+                    <TextBlock Text="{DynamicResource Stat_PageSubtitle}" 
                                Style="{StaticResource PageSubtitleTextStyle}" Margin="0,4,0,0"/>
                 </StackPanel>
 
-                <!-- Панель фільтрів та перемикання режимів -->
                 <Border Grid.Row="1" Style="{StaticResource CardBorderStyle}" Padding="16" Margin="0,0,0,16">
                     <WrapPanel VerticalAlignment="Center">
-                        <!-- Перемикач режимів (День / Тиждень / Місяць) -->
                         <StackPanel Orientation="Horizontal" Margin="0,0,24,8">
-                            <RadioButton Content="День" IsChecked="{Binding IsDayMode, Mode=TwoWay}" 
+                            <RadioButton Content="{DynamicResource Stat_ModeDay}" IsChecked="{Binding IsDayMode, Mode=TwoWay}" 
                                          Style="{StaticResource NavRadioButtonStyle}" Padding="12,6" Margin="0,0,4,0"/>
-                            <RadioButton Content="Тиждень" IsChecked="{Binding IsWeekMode, Mode=TwoWay}" 
+                            <RadioButton Content="{DynamicResource Stat_ModeWeek}" IsChecked="{Binding IsWeekMode, Mode=TwoWay}" 
                                          Style="{StaticResource NavRadioButtonStyle}" Padding="12,6" Margin="0,0,4,0"/>
-                            <RadioButton Content="Місяць" IsChecked="{Binding IsMonthMode, Mode=TwoWay}" 
+                            <RadioButton Content="{DynamicResource Stat_ModeMonth}" IsChecked="{Binding IsMonthMode, Mode=TwoWay}" 
                                          Style="{StaticResource NavRadioButtonStyle}" Padding="12,6"/>
                         </StackPanel>
 
                         <Border Width="1" Height="28" Background="{StaticResource BorderBrush}" Margin="0,0,24,8"/>
 
-                        <!-- Фільтр 1: Вибір Місяця та Року -->
                         <StackPanel Orientation="Horizontal" Margin="0,0,16,8">
-                            <TextBlock Text="Місяць:" VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                            <TextBlock Text="{DynamicResource Stat_MonthLabel}" VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
                             <ComboBox ItemsSource="{Binding MonthsList}" SelectedItem="{Binding SelectedMonth}" Style="{StaticResource AppComboBoxStyle}" Width="130" Margin="0,0,8,0"/>
                             <ComboBox ItemsSource="{Binding YearsList}" SelectedItem="{Binding SelectedYear}" Style="{StaticResource AppComboBoxStyle}" Width="90"/>
                         </StackPanel>
 
-                        <!-- Динамічний фільтр дат залежно від обраного режиму -->
-                        
-                        <!-- Для режиму "День" -->
                         <StackPanel Orientation="Horizontal" Margin="0,0,8,8" 
                                     Visibility="{Binding IsDayMode, Converter={StaticResource BoolToVisibilityConverter}}">
-                            <TextBlock Text="Дата:" VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                            <TextBlock Text="{DynamicResource Stat_DateLabel}" VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
                             <DatePicker SelectedDate="{Binding SelectedDate, Mode=TwoWay}" Style="{StaticResource AppDatePickerStyle}" Width="150"/>
                         </StackPanel>
 
-                        <!-- Для режиму "Тиждень" -->
                         <StackPanel Orientation="Horizontal" Margin="0,0,8,8" 
                                     Visibility="{Binding IsWeekMode, Converter={StaticResource BoolToVisibilityConverter}}">
-                            <TextBlock Text="Тиждень:" VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
-    
-                            <!-- Додано DisplayMemberPath="DisplayName" -->
+                            <TextBlock Text="{DynamicResource Stat_WeekLabel}" VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
                             <ComboBox ItemsSource="{Binding WeeksList}" 
                                       SelectedItem="{Binding SelectedWeek}" 
                                       DisplayMemberPath="DisplayName" 
@@ -64,11 +54,10 @@
                                       Width="200"/>
                         </StackPanel>
 
-                        <Button Content="Показати" Command="{Binding RefreshStatsCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="8,0,0,8" VerticalAlignment="Center"/>
+                        <Button Content="{DynamicResource Btn_Show}" Command="{Binding RefreshStatsCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="8,0,0,8" VerticalAlignment="Center"/>
                     </WrapPanel>
                 </Border>
 
-                <!-- Картки загальних підсумків КБЖУ за обраний період -->
                 <Grid Grid.Row="2" Margin="0,0,0,16">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -80,40 +69,36 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- Калорії -->
                     <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}" Padding="14">
                         <StackPanel>
-                            <TextBlock Text="🔥 Калорії" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/>
+                            <TextBlock Text="{DynamicResource Dash_Calories}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/>
                             <TextBlock Text="{Binding TotalCaloriesText}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource CaloriesBrush}" Margin="0,6,0,2"/>
                             <TextBlock Text="{Binding CalorieGoalDiffText}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
                             <ProgressBar Value="{Binding CalorieProgressPercent}" Maximum="100" Height="6" Margin="0,8,0,0" Foreground="{StaticResource CaloriesBrush}" Background="{StaticResource SurfaceSubtleBrush}"/>
                         </StackPanel>
                     </Border>
 
-                    <!-- Білки -->
                     <Border Grid.Column="2" Style="{StaticResource CardBorderStyle}" Padding="14">
                         <StackPanel>
-                            <TextBlock Text="🥩 Білки" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/>
+                            <TextBlock Text="{DynamicResource Dash_Proteins}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/>
                             <TextBlock Text="{Binding TotalProteinsText}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource ProteinsBrush}" Margin="0,6,0,2"/>
                             <TextBlock Text="{Binding ProteinGoalText}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
                             <ProgressBar Value="{Binding ProteinProgressPercent}" Maximum="100" Height="6" Margin="0,8,0,0" Foreground="{StaticResource ProteinsBrush}" Background="{StaticResource SurfaceSubtleBrush}"/>
                         </StackPanel>
                     </Border>
 
-                    <!-- Жири -->
                     <Border Grid.Column="4" Style="{StaticResource CardBorderStyle}" Padding="14">
                         <StackPanel>
-                            <TextBlock Text="🥑 Жири" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/>
+                            <TextBlock Text="{DynamicResource Dash_Fats}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/>
                             <TextBlock Text="{Binding TotalFatsText}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource FatsBrush}" Margin="0,6,0,2"/>
                             <TextBlock Text="{Binding FatGoalText}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
                             <ProgressBar Value="{Binding FatProgressPercent}" Maximum="100" Height="6" Margin="0,8,0,0" Foreground="{StaticResource FatsBrush}" Background="{StaticResource SurfaceSubtleBrush}"/>
                         </StackPanel>
                     </Border>
 
-                    <!-- Вуглеводи -->
                     <Border Grid.Column="6" Style="{StaticResource CardBorderStyle}" Padding="14">
                         <StackPanel>
-                            <TextBlock Text="🌾 Вуглеводи" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/>
+                            <TextBlock Text="{DynamicResource Dash_Carbs}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/>
                             <TextBlock Text="{Binding TotalCarbsText}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource CarbsBrush}" Margin="0,6,0,2"/>
                             <TextBlock Text="{Binding CarbGoalText}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
                             <ProgressBar Value="{Binding CarbProgressPercent}" Maximum="100" Height="6" Margin="0,8,0,0" Foreground="{StaticResource CarbsBrush}" Background="{StaticResource SurfaceSubtleBrush}"/>
@@ -121,19 +106,18 @@
                     </Border>
                 </Grid>
 
-                <!-- Детальна таблиця по днях за період -->
                 <Border Grid.Row="3" Style="{StaticResource CardBorderStyle}" Padding="0">
                     <DockPanel>
                         <TextBlock DockPanel.Dock="Top" Text="{Binding PeriodTableTitle}" FontSize="15" FontWeight="Bold" Margin="16,14,16,10" Foreground="{StaticResource TextPrimaryBrush}"/>
                         
                         <DataGrid ItemsSource="{Binding DailyBreakdownList}" AutoGenerateColumns="False" IsReadOnly="True" MinHeight="250">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Дата / День" Binding="{Binding DateDisplay}" Width="140"/>
-                                <DataGridTextColumn Header="Калорії (ккал)" Binding="{Binding Calories, StringFormat={}{0:F0}}" Width="120"/>
-                                <DataGridTextColumn Header="Білки (г)" Binding="{Binding Proteins, StringFormat={}{0:F1}}" Width="100"/>
-                                <DataGridTextColumn Header="Жири (г)" Binding="{Binding Fats, StringFormat={}{0:F1}}" Width="100"/>
-                                <DataGridTextColumn Header="Вуглеводи (г)" Binding="{Binding Carbs, StringFormat={}{0:F1}}" Width="110"/>
-                                <DataGridTextColumn Header="Виконання цілі" Binding="{Binding GoalCompletionStatus}" Width="*"/>
+                                <DataGridTextColumn Header="{DynamicResource Stat_ColDateDay}" Binding="{Binding DateDisplay}" Width="140"/>
+                                <DataGridTextColumn Header="{DynamicResource Cat_Calories}" Binding="{Binding Calories, StringFormat={}{0:F0}}" Width="120"/>
+                                <DataGridTextColumn Header="{DynamicResource Cat_Proteins}" Binding="{Binding Proteins, StringFormat={}{0:F1}}" Width="100"/>
+                                <DataGridTextColumn Header="{DynamicResource Cat_Fats}" Binding="{Binding Fats, StringFormat={}{0:F1}}" Width="100"/>
+                                <DataGridTextColumn Header="{DynamicResource Cat_Carbs}" Binding="{Binding Carbs, StringFormat={}{0:F1}}" Width="110"/>
+                                <DataGridTextColumn Header="{DynamicResource Stat_ColGoalStatus}" Binding="{Binding GoalCompletionStatus}" Width="*"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </DockPanel>

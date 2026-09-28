@@ -19,7 +19,7 @@ public sealed class ActionRecord
         UserId = userId;
         ActionType = actionType;
         Description = description.Trim();
-        EntityName = string.IsNullOrWhiteSpace(entityName) ? "Загальне" : entityName.Trim();
+        EntityName = string.IsNullOrWhiteSpace(entityName) ? string.Empty : entityName.Trim();
         EntityId = entityId;
         BeforeJson = beforeJson;
         AfterJson = afterJson;

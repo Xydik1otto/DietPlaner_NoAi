@@ -6,19 +6,26 @@ namespace DietPlanner.Services;
 
 public sealed class ValidationService : IValidationService
 {
+    private readonly ILocalizationService _loc;
+
+    public ValidationService(ILocalizationService loc)
+    {
+        _loc = loc;
+    }
+
     public IReadOnlyList<string> ValidateRequiredText(string? value, string fieldName, int maxLength)
     {
         var errors = new List<string>();
 
         if (string.IsNullOrWhiteSpace(value))
         {
-            errors.Add($"{fieldName}: поле не може бути порожнім.");
+            errors.Add(string.Format(_loc.GetString("Val_RequiredField"), fieldName));
             return errors;
         }
 
         if (value.Trim().Length > maxLength)
         {
-            errors.Add($"{fieldName}: максимальна довжина — {maxLength} символів.");
+            errors.Add(string.Format(_loc.GetString("Val_MaxLengthExceeded"), fieldName, maxLength));
         }
 
         return errors;
@@ -28,27 +35,25 @@ public sealed class ValidationService : IValidationService
     {
         if (string.IsNullOrWhiteSpace(value))
         {
-            return [$"{fieldName}: поле не може бути порожнім."];
+            return [string.Format(_loc.GetString("Val_RequiredField"), fieldName)];
         }
 
-        var normalized = value.Trim();
+        var normalized = value.Trim().Replace(',', '.');
 
-        // decimal itself has no NaN/Infinity values, but the requirement applies
-        // to user input as well, so check the textual numeric value at the boundary.
-        if (double.TryParse(normalized, NumberStyles.Float, CultureInfo.CurrentCulture, out var floatingValue)
+        if (double.TryParse(normalized, NumberStyles.Float, CultureInfo.InvariantCulture, out var floatingValue)
             && (double.IsNaN(floatingValue) || double.IsInfinity(floatingValue)))
         {
-            return [$"{fieldName}: значення NaN або нескінченність неприпустимі."];
+            return [string.Format(_loc.GetString("Val_InvalidNumber"), fieldName)];
         }
 
-        if (!decimal.TryParse(normalized, NumberStyles.Float, CultureInfo.CurrentCulture, out var number))
+        if (!decimal.TryParse(normalized, NumberStyles.Float, CultureInfo.InvariantCulture, out var number))
         {
-            return [$"{fieldName}: введіть число."];
+            return [string.Format(_loc.GetString("Val_EnterValidNumber"), fieldName)];
         }
 
         if (number < min || number > max)
         {
-            return [$"{fieldName}: значення має бути в межах {min}–{max}."];
+            return [string.Format(_loc.GetString("Val_RangeExceeded"), fieldName, min, max)];
         }
 
         return Array.Empty<string>();
@@ -69,11 +74,11 @@ public sealed class ValidationService : IValidationService
         }
         catch (FormatException)
         {
-            return [$"{fieldName}: некоректний формат email."];
+            return [string.Format(_loc.GetString("Val_InvalidEmailFormat"), fieldName)];
         }
     }
 
-    public IReadOnlyList<string> ValidatePassword(string? value, string fieldName = "Пароль")
+    public IReadOnlyList<string> ValidatePassword(string? value, string fieldName = "Password")
     {
         var errors = ValidateRequiredText(value, fieldName, 128).ToList();
         if (string.IsNullOrWhiteSpace(value))
@@ -83,7 +88,7 @@ public sealed class ValidationService : IValidationService
 
         if (value.Length < 8)
         {
-            errors.Add($"{fieldName}: мінімальна довжина — 8 символів.");
+            errors.Add(string.Format(_loc.GetString("Val_MinPasswordLength"), fieldName, 8));
         }
 
         return errors;

@@ -1,21 +1,19 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using DietPlanner.Data;
 using DietPlanner.Services.Contracts;
 using DietPlanner.ViewModels;
+using Microsoft.EntityFrameworkCore;
 
 namespace DietPlanner.Services;
 
 public class StatisticsService : IStatisticsService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory;
+    private readonly ILocalizationService _loc;
 
-    public StatisticsService(IDbContextFactory<AppDbContext> dbFactory)
+    public StatisticsService(IDbContextFactory<AppDbContext> dbFactory, ILocalizationService loc)
     {
         _dbFactory = dbFactory;
+        _loc = loc;
     }
 
     public async Task<List<DailyStatItem>> GetDailyStatsAsync(Guid userId, DateTime date)
@@ -42,7 +40,7 @@ public class StatisticsService : IStatisticsService
                 Proteins = proteins,
                 Fats = fats,
                 Carbs = carbs,
-                GoalCompletionStatus = calories > 0 ? "В нормі" : "Немає записів"
+                GoalCompletionStatus = calories > 0 ? _loc.GetString("Stat_InNorm") : _loc.GetString("Stat_NoRecords")
             }
         };
     }
@@ -73,7 +71,7 @@ public class StatisticsService : IStatisticsService
                 Proteins = prot,
                 Fats = fat,
                 Carbs = carbs,
-                GoalCompletionStatus = dayIntakes.Any() ? "Виконано" : "Пропущено"
+                GoalCompletionStatus = dayIntakes.Any() ? _loc.GetString("Stat_Completed") : _loc.GetString("Stat_Skipped")
             });
         }
 

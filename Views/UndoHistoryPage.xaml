@@ -10,28 +10,25 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Заголовок -->
         <StackPanel Grid.Row="0" Margin="0,0,0,16">
             <TextBlock Text="{DynamicResource Nav_UndoHistory}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
-            <TextBlock Text="Переглядай останні зміни та поверни останню операцію одним кліком." FontSize="13" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
+            <TextBlock Text="{DynamicResource Undo_Subtitle}" FontSize="13" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
         </StackPanel>
 
-        <!-- Панель дій -->
         <Border Grid.Row="1" Style="{StaticResource CardBorderStyle}" Padding="12" Margin="0,0,0,16">
             <WrapPanel VerticalAlignment="Center">
-                <Button Content="Оновити список" Command="{Binding LoadHistoryCommand}" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,10,0"/>
-                <Button Content="Скасувати останню дію (Undo)" Command="{Binding UndoCommand}" Style="{StaticResource PrimaryButtonStyle}"/>
+                <Button Content="{DynamicResource Undo_BtnRefresh}" Command="{Binding LoadHistoryCommand}" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,10,0"/>
+                <Button Content="{DynamicResource Undo_BtnUndo}" Command="{Binding UndoCommand}" Style="{StaticResource PrimaryButtonStyle}"/>
             </WrapPanel>
         </Border>
 
-        <!-- Таблиця історії дій поточного користувача -->
         <Border Grid.Row="2" Style="{StaticResource CardBorderStyle}" Padding="0">
             <DataGrid ItemsSource="{Binding HistoryItems}" AutoGenerateColumns="False" IsReadOnly="True" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#EAEAEA" RowHeight="38" Background="Transparent" BorderThickness="0">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Час" Binding="{Binding Timestamp, StringFormat={}{0:dd.MM.yyyy HH:mm:ss}}" Width="150"/>
-                    <DataGridTextColumn Header="Тип дії" Binding="{Binding ActionType}" Width="110"/>
-                    <DataGridTextColumn Header="Опис зміни" Binding="{Binding Description}" Width="*"/>
-                    <DataGridTextColumn Header="Об'єкт" Binding="{Binding EntityName}" Width="130"/>
+                    <DataGridTextColumn Header="{DynamicResource Undo_ColTime}" Binding="{Binding Timestamp, StringFormat={}{0:dd.MM.yyyy HH:mm:ss}}" Width="150"/>
+                    <DataGridTextColumn Header="{DynamicResource Undo_ColActionType}" Binding="{Binding ActionType}" Width="110"/>
+                    <DataGridTextColumn Header="{DynamicResource Undo_ColDesc}" Binding="{Binding Description}" Width="*"/>
+                    <DataGridTextColumn Header="{DynamicResource Undo_ColEntity}" Binding="{Binding EntityName}" Width="130"/>
                 </DataGrid.Columns>
             </DataGrid>
         </Border>

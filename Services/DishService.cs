@@ -10,12 +10,14 @@ public sealed class DishService : IDishService
     private readonly IDbContextFactory<AppDbContext> _dbFactory;
     private readonly SessionService _session;
     private readonly ILoggingService _logging;
+    private readonly ILocalizationService _loc;
 
-    public DishService(IDbContextFactory<AppDbContext> dbFactory, SessionService session, ILoggingService logging)
+    public DishService(IDbContextFactory<AppDbContext> dbFactory, SessionService session, ILoggingService logging, ILocalizationService loc)
     {
         _dbFactory = dbFactory;
         _session = session;
         _logging = logging;
+        _loc = loc;
     }
 
     public async Task<IReadOnlyList<Dish>> GetAllAsync(bool includeInactive = false, CancellationToken cancellationToken = default)
@@ -32,11 +34,11 @@ public sealed class DishService : IDishService
         var input = ValidateIngredients(ingredients).ToList();
         await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
         if (!await db.Categories.AnyAsync(x => x.Id == categoryId && x.IsActive, cancellationToken))
-            throw new KeyNotFoundException("Категорію не знайдено або вона неактивна.");
+            throw new KeyNotFoundException(_loc.GetString("Err_CategoryNotFound"));
 
         var productIds = input.Select(x => x.ProductId).Distinct().ToArray();
         var count = await db.Products.CountAsync(x => productIds.Contains(x.Id) && x.IsActive, cancellationToken);
-        if (count != productIds.Length) throw new KeyNotFoundException("Один або декілька продуктів не знайдені.");
+        if (count != productIds.Length) throw new KeyNotFoundException(_loc.GetString("Err_ProductNotFound"));
 
         var dish = new Dish(name, categoryId, description);
         foreach (var ingredient in input) dish.Ingredients.Add(new DishIngredient(ingredient.ProductId, ingredient.Amount, ingredient.Unit));
@@ -52,13 +54,13 @@ public sealed class DishService : IDishService
         var input = ValidateIngredients(ingredients).ToList();
         await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
         var dish = await db.Dishes.Include(x => x.Ingredients).SingleOrDefaultAsync(x => x.Id == id, cancellationToken)
-            ?? throw new KeyNotFoundException("Страву не знайдено.");
+            ?? throw new KeyNotFoundException(_loc.GetString("Err_DishNotFound"));
         if (!await db.Categories.AnyAsync(x => x.Id == categoryId && x.IsActive, cancellationToken))
-            throw new KeyNotFoundException("Категорію не знайдено або вона неактивна.");
+            throw new KeyNotFoundException(_loc.GetString("Err_CategoryNotFound"));
 
         var productIds = input.Select(x => x.ProductId).Distinct().ToArray();
         var count = await db.Products.CountAsync(x => productIds.Contains(x.Id) && x.IsActive, cancellationToken);
-        if (count != productIds.Length) throw new KeyNotFoundException("Один або декілька продуктів не знайдені.");
+        if (count != productIds.Length) throw new KeyNotFoundException(_loc.GetString("Err_ProductNotFound"));
 
         dish.SetName(name);
         dish.SetCategory(categoryId);
@@ -75,27 +77,27 @@ public sealed class DishService : IDishService
         EnsureAuthenticated();
         await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
         var dish = await db.Dishes.SingleOrDefaultAsync(x => x.Id == id, cancellationToken)
-            ?? throw new KeyNotFoundException("Страву не знайдено.");
+            ?? throw new KeyNotFoundException(_loc.GetString("Err_DishNotFound"));
         dish.Deactivate();
         await db.SaveChangesAsync(cancellationToken);
         await _logging.LogActionAsync(_session.CurrentUser?.Id, ActionType.Delete, "Deactivated dish", "Dish", id, cancellationToken: cancellationToken);
     }
 
-    private static IEnumerable<DishIngredientInput> ValidateIngredients(IEnumerable<DishIngredientInput> ingredients)
+    private IEnumerable<DishIngredientInput> ValidateIngredients(IEnumerable<DishIngredientInput> ingredients)
     {
         var materialized = ingredients.ToList();
-        if (materialized.Count == 0) throw new ArgumentException("Страва повинна містити хоча б один продукт.");
+        if (materialized.Count == 0) throw new ArgumentException(_loc.GetString("Err_ProductRequiredInDish"));
         foreach (var item in materialized)
         {
-            if (item.ProductId == Guid.Empty) throw new ArgumentException("Не вибрано продукт.");
-            if (item.Amount <= 0m) throw new ArgumentOutOfRangeException(nameof(item.Amount), "Кількість інгредієнта має бути більшою за 0.");
-            if (string.IsNullOrWhiteSpace(item.Unit)) throw new ArgumentException("Одиниця вимірювання не може бути порожньою.");
+            if (item.ProductId == Guid.Empty) throw new ArgumentException(_loc.GetString("Err_ProductNotSelected"));
+            if (item.Amount <= 0m) throw new ArgumentOutOfRangeException(nameof(item.Amount), _loc.GetString("Err_PositiveIngredientAmount"));
+            if (string.IsNullOrWhiteSpace(item.Unit)) throw new ArgumentException(_loc.GetString("Err_EmptyUnit"));
         }
         return materialized;
     }
 
     private void EnsureAuthenticated()
     {
-        if (!_session.IsAuthenticated) throw new UnauthorizedAccessException("Потрібен вхід.");
+        if (!_session.IsAuthenticated) throw new UnauthorizedAccessException(_loc.GetString("Err_Unauthorized"));
     }
 }

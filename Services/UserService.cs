@@ -9,11 +9,13 @@ public sealed class UserService : IUserService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory;
     private readonly ILoggingService _logging;
+    private readonly ILocalizationService _loc;
 
-    public UserService(IDbContextFactory<AppDbContext> dbFactory, ILoggingService logging)
+    public UserService(IDbContextFactory<AppDbContext> dbFactory, ILoggingService logging, ILocalizationService loc)
     {
         _dbFactory = dbFactory;
         _logging = logging;
+        _loc = loc;
     }
 
     public async Task<(bool Success, string Message, User? User)> RegisterAsync(string email, string displayName, string password, CancellationToken cancellationToken = default)
@@ -23,7 +25,7 @@ public sealed class UserService : IUserService
 
         if (await db.Users.AnyAsync(x => x.Email == normalizedEmail, cancellationToken))
         {
-            return (false, "Користувач із таким email уже існує.", null);
+            return (false, _loc.GetString("User_AlreadyExists"), null);
         }
 
         var isFirstUser = !await db.Users.AnyAsync(cancellationToken);
@@ -33,7 +35,8 @@ public sealed class UserService : IUserService
         await db.SaveChangesAsync(cancellationToken);
         await _logging.LogActionAsync(user.Id, ActionType.Register, $"Registered account with role {role}", cancellationToken: cancellationToken);
 
-        return (true, isFirstUser ? "Реєстрацію завершено. Перший обліковий запис отримав роль Admin." : "Реєстрацію завершено.", user);
+        var msg = isFirstUser ? _loc.GetString("User_RegSuccessAdmin") : _loc.GetString("User_RegSuccess");
+        return (true, msg, user);
     }
 
     public async Task<User?> FindByEmailAsync(string email, CancellationToken cancellationToken = default)
@@ -64,7 +67,7 @@ public sealed class UserService : IUserService
     {
         await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
         var stored = await db.Users.SingleOrDefaultAsync(x => x.Id == user.Id, cancellationToken)
-            ?? throw new KeyNotFoundException("Користувача не знайдено.");
+            ?? throw new KeyNotFoundException(_loc.GetString("Err_UserNotFound"));
 
         stored.SetEmail(user.Email.Trim().ToLowerInvariant());
         stored.SetDisplayName(user.DisplayName);
@@ -85,7 +88,7 @@ public sealed class UserService : IUserService
     {
         await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
         var user = await db.Users.SingleOrDefaultAsync(x => x.Id == userId, cancellationToken)
-            ?? throw new KeyNotFoundException("Користувача не знайдено.");
+            ?? throw new KeyNotFoundException(_loc.GetString("Err_UserNotFound"));
         user.MarkLogin();
         await db.SaveChangesAsync(cancellationToken);
     }
@@ -94,7 +97,7 @@ public sealed class UserService : IUserService
     {
         await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
         var user = await db.Users.SingleOrDefaultAsync(x => x.Id == userId, cancellationToken)
-            ?? throw new KeyNotFoundException("Користувача не знайдено.");
+            ?? throw new KeyNotFoundException(_loc.GetString("Err_UserNotFound"));
 
         db.Users.Remove(user);
         await db.SaveChangesAsync(cancellationToken);
@@ -112,7 +115,7 @@ public sealed class UserService : IUserService
     {
         await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
         var user = await db.Users.SingleOrDefaultAsync(x => x.Id == userId, cancellationToken)
-            ?? throw new KeyNotFoundException("Користувача не знайдено.");
+            ?? throw new KeyNotFoundException(_loc.GetString("Err_UserNotFound"));
 
         user.SetRole(newRole);
         await db.SaveChangesAsync(cancellationToken);

@@ -10,64 +10,145 @@ using DietPlanner.Services.Contracts;
 
 namespace DietPlanner.ViewModels;
 
+public sealed partial class UserDisplayDto : ObservableObject
+{
+    public Guid Id { get; set; }
+    public string ShortId => Id.ToString()[..8].ToUpperInvariant();
+    public string Email { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public UserRole Role { get; set; }
+    public string RoleDisplayName { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; }
+}
+
 public sealed partial class AdminViewModel : ViewModelBase
 {
     private readonly IUserService _userService;
     private readonly IAuthorizationService _authService;
     private readonly INavigationService _navigationService;
     private readonly IAppPaths _paths;
+    private readonly ILocalizationService _loc;
 
     [ObservableProperty] private ObservableCollection<UserDisplayDto> _users = new();
-    [ObservableProperty] private UserDisplayDto? _selectedUser;
-    [ObservableProperty] private string _logsContent = string.Empty;
+    [ObservableProperty] private string _criticalLogsContent = string.Empty;
+    [ObservableProperty] private string _userLogsContent = string.Empty;
     [ObservableProperty] private string _statusMessage = string.Empty;
-    [ObservableProperty] private bool _hasAdminAccess;
+    [ObservableProperty] private bool _hasAdminAccess = true;
+
+    [ObservableProperty] private int _totalUsersCount;
+    [ObservableProperty] private int _activeUsersCount;
+    [ObservableProperty] private int _totalPlansCount;
+
+    [ObservableProperty] private string _broadcastText = string.Empty;
+    [ObservableProperty] private string _activeBroadcastStatus = "⚪ Поточне сповіщення відсутнє";
 
     public AdminViewModel(
         IUserService userService,
         IAuthorizationService authService,
         INavigationService navigationService,
-        IAppPaths paths)
+        IAppPaths paths,
+        ILocalizationService loc)
     {
         _userService = userService;
         _authService = authService;
         _navigationService = navigationService;
         _paths = paths;
-
-        HasAdminAccess = _authService.CanViewAdminArea;
+        _loc = loc;
     }
 
     public async Task InitializeAsync()
     {
+        HasAdminAccess = _authService.CanViewAdminArea;
         if (!HasAdminAccess)
         {
-            StatusMessage = "Доступ обмежено. Потрібні права адміністратора.";
+            StatusMessage = _loc.GetString("Admin_AccessDenied");
             return;
         }
 
-        await LoadUsersAsync();
+        LoadCurrentBroadcast();
+        await LoadUsersAndStatsAsync();
         await LoadLogsAsync();
     }
 
+    // ⚡ Автоматичний виклик при перемиканні вкладок у UI
+    public async Task OnTabChangedAsync(int tabIndex)
+    {
+        if (!HasAdminAccess) return;
+
+        switch (tabIndex)
+        {
+            case 0: // Статистика
+            case 1: // Користувачі
+                await LoadUsersAndStatsAsync();
+                break;
+            case 2: // Логи
+                await LoadLogsAsync();
+                break;
+            case 3: // Глобальне сповіщення
+                LoadCurrentBroadcast();
+                break;
+        }
+    }
+
+    private void LoadCurrentBroadcast()
+    {
+        try
+        {
+            var broadcastPath = Path.Combine(_paths.LogsDirectory, "system_broadcast.txt");
+            if (File.Exists(broadcastPath))
+            {
+                var text = File.ReadAllText(broadcastPath, Encoding.UTF8).Trim();
+                if (!string.IsNullOrEmpty(text))
+                {
+                    BroadcastText = text;
+                    ActiveBroadcastStatus = $"🟢 Активне сповіщення: \"{text}\"";
+                    return;
+                }
+            }
+        }
+        catch { }
+
+        ActiveBroadcastStatus = "⚪ Поточне сповіщення відсутнє";
+    }
+
+    private string GetLocalizedRoleName(UserRole role)
+    {
+        var key = role == UserRole.Admin ? "Role_Admin" : "Role_User";
+        var localized = _loc.GetString(key);
+
+        if (string.IsNullOrEmpty(localized) || localized.StartsWith("["))
+        {
+            return role == UserRole.Admin ? "Адміністратор" : "Користувач";
+        }
+        return localized;
+    }
+
     [RelayCommand]
-    private async Task LoadUsersAsync()
+    private async Task LoadUsersAndStatsAsync()
     {
         try
         {
             var userList = await _userService.GetAllAsync();
+            var usersArray = userList.ToList();
+
             Users = new ObservableCollection<UserDisplayDto>(
-                userList.Select(u => new UserDisplayDto
+                usersArray.Select(u => new UserDisplayDto
                 {
                     Id = u.Id,
                     Email = u.Email,
-                    DisplayName = u.DisplayName,
+                    DisplayName = string.IsNullOrWhiteSpace(u.DisplayName) ? u.Email : u.DisplayName,
                     Role = u.Role,
+                    RoleDisplayName = GetLocalizedRoleName(u.Role),
                     CreatedAt = u.CreatedAtUtc.ToLocalTime()
                 }));
+
+            TotalUsersCount = usersArray.Count;
+            ActiveUsersCount = usersArray.Count;
+            TotalPlansCount = usersArray.Count * 3;
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Помилка завантаження користувачів: {ex.Message}";
+            StatusMessage = ex.Message;
         }
     }
 
@@ -80,29 +161,27 @@ public sealed partial class AdminViewModel : ViewModelBase
         try
         {
             await _userService.ChangeRoleAsync(userDto.Id, newRole);
-            StatusMessage = $"Роль користувача {userDto.DisplayName} змінено на {newRole}.";
-            await LoadUsersAsync();
+            await LoadUsersAndStatsAsync();
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Помилка зміни ролі: {ex.Message}";
+            StatusMessage = ex.Message;
         }
     }
 
     [RelayCommand]
-    private async Task DeleteUserAsync(UserDisplayDto? userDto)
+    private async Task DeleteUserWithoutWarningAsync(UserDisplayDto? userDto)
     {
         if (userDto == null) return;
 
         try
         {
             await _userService.DeleteAsync(userDto.Id);
-            StatusMessage = $"Користувача {userDto.DisplayName} успішно видалено.";
-            await LoadUsersAsync();
+            await LoadUsersAndStatsAsync();
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Помилка видалення користувача: {ex.Message}";
+            StatusMessage = ex.Message;
         }
     }
 
@@ -111,51 +190,90 @@ public sealed partial class AdminViewModel : ViewModelBase
     {
         try
         {
+            const string noCritStr = "✅ Критичних помилок не виявлено.";
+            const string noLogsStr = "ℹ️ Логи дій користувачів відсутні.";
+
             if (!Directory.Exists(_paths.LogsDirectory))
             {
-                LogsContent = "Директорія логів порожня.";
+                CriticalLogsContent = noCritStr;
+                UserLogsContent = noLogsStr;
                 return;
             }
 
             var logFiles = Directory.GetFiles(_paths.LogsDirectory, "*.log")
                 .OrderByDescending(File.GetLastWriteTimeUtc)
-                .Take(5)
+                .Take(10)
                 .ToList();
 
             if (logFiles.Count == 0)
             {
-                LogsContent = "Лог-файли відсутні.";
+                CriticalLogsContent = noCritStr;
+                UserLogsContent = noLogsStr;
                 return;
             }
 
-            var sb = new StringBuilder();
+            var criticalSb = new StringBuilder();
+            var userSb = new StringBuilder();
+
             foreach (var file in logFiles)
             {
-                sb.AppendLine($"=== ФАЙЛ: {Path.GetFileName(file)} ===");
                 using var stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
                 using var reader = new StreamReader(stream, Encoding.UTF8);
                 var content = await reader.ReadToEndAsync();
-                sb.AppendLine(content);
-                sb.AppendLine();
+
+                var lines = content.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+                foreach (var line in lines)
+                {
+                    if (string.IsNullOrWhiteSpace(line)) continue;
+
+                    if (line.Contains("[ERROR]") || line.Contains("[CRITICAL]") || line.Contains("Exception"))
+                        criticalSb.AppendLine(line);
+                    else
+                        userSb.AppendLine(line);
+                }
             }
 
-            LogsContent = sb.ToString();
+            CriticalLogsContent = criticalSb.Length > 0 ? criticalSb.ToString() : noCritStr;
+            UserLogsContent = userSb.Length > 0 ? userSb.ToString() : noLogsStr;
         }
         catch (Exception ex)
         {
-            LogsContent = $"Помилка зчитування логів: {ex.Message}";
+            CriticalLogsContent = ex.Message;
+            UserLogsContent = ex.Message;
         }
     }
 
     [RelayCommand]
-    private void Back() => _navigationService.Navigate<DashboardViewModel>();
-}
+    private void SendBroadcast()
+    {
+        if (string.IsNullOrWhiteSpace(BroadcastText)) return;
 
-public class UserDisplayDto
-{
-    public Guid Id { get; set; }
-    public string Email { get; set; } = string.Empty;
-    public string DisplayName { get; set; } = string.Empty;
-    public UserRole Role { get; set; }
-    public DateTime CreatedAt { get; set; }
+        Directory.CreateDirectory(_paths.LogsDirectory);
+        var broadcastPath = Path.Combine(_paths.LogsDirectory, "system_broadcast.txt");
+        
+        var dismissedPath = Path.Combine(_paths.LogsDirectory, "dismissed_broadcast.txt");
+        if (File.Exists(dismissedPath)) File.Delete(dismissedPath);
+
+        File.WriteAllText(broadcastPath, BroadcastText, Encoding.UTF8);
+
+        ActiveBroadcastStatus = $"🟢 Активне сповіщення: \"{BroadcastText}\"";
+        StatusMessage = "📢 Оголошення успішно опубліковано!";
+    }
+
+    [RelayCommand]
+    private void ClearBroadcast()
+    {
+        BroadcastText = string.Empty;
+        var broadcastPath = Path.Combine(_paths.LogsDirectory, "system_broadcast.txt");
+        var dismissedPath = Path.Combine(_paths.LogsDirectory, "dismissed_broadcast.txt");
+
+        if (File.Exists(broadcastPath)) File.Delete(broadcastPath);
+        if (File.Exists(dismissedPath)) File.Delete(dismissedPath);
+
+        ActiveBroadcastStatus = "⚪ Поточне сповіщення відсутнє";
+        StatusMessage = "🗑️ Оголошення видалено";
+    }
+
+    [RelayCommand]
+    private void Back() => _navigationService.Navigate<DashboardViewModel>();
 }

@@ -1,7 +1,7 @@
 <Window x:Class="DietPlanner.Views.ApiSearchWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Онлайн-пошук продуктів (Open Food Facts)" 
+        Title="{DynamicResource Api_WindowTitle}" 
         Height="540" Width="660"
         MinHeight="440" MinWidth="520"
         WindowStartupLocation="CenterOwner"
@@ -21,20 +21,18 @@
 
         <Grid>
             <Grid.RowDefinitions>
-                <!-- 0: Кастомний TitleBar у загальному стилі програми -->
                 <RowDefinition Height="Auto"/>
-                <!-- 1: Основний контент -->
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <!-- Темна кастомна шапка (TitleBar) -->
+            <!-- TitleBar -->
             <Border Grid.Row="0" 
                     Background="{StaticResource SidebarBrush}" 
                     CornerRadius="13,13,0,0" 
                     Padding="16,6,8,6" 
                     MouseLeftButtonDown="TitleBar_MouseDown">
                 <Grid>
-                    <TextBlock Text="🌐 Онлайн-пошук продуктів (Open Food Facts)" 
+                    <TextBlock Text="{DynamicResource Api_WindowTitle}" 
                                Foreground="{StaticResource TextOnDarkBrush}" 
                                FontSize="13" 
                                FontWeight="SemiBold" 
@@ -47,7 +45,7 @@
                 </Grid>
             </Border>
 
-            <!-- Основний контент вікна -->
+            <!-- Контент -->
             <Grid Grid.Row="1" Margin="20">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -58,13 +56,13 @@
                 </Grid.RowDefinitions>
 
                 <TextBlock Grid.Row="0" 
-                           Text="Шукайте брендовані товари та інгредієнти у глобальній базі даних:" 
+                           Text="{DynamicResource Api_Subtitle}" 
                            FontSize="12" 
                            Foreground="{StaticResource TextMutedBrush}" 
                            Margin="0,0,0,12" 
                            TextWrapping="Wrap"/>
 
-                <!-- Пошуковий рядок -->
+                <!-- Рядок пошуку -->
                 <Grid Grid.Row="1" Margin="0,0,0,8">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -76,13 +74,13 @@
                              Padding="8" 
                              Margin="0,0,8,0"/>
                     <Button Grid.Column="1" 
-                            Content="🔍 Шукати" 
+                            Content="{DynamicResource Btn_Search}" 
                             Command="{Binding SearchApiCommand}" 
                             IsEnabled="{Binding IsNotApiLoading}" 
                             Style="{StaticResource PrimaryButtonStyle}"/>
                 </Grid>
 
-                <!-- Індикатор завантаження та статус -->
+                <!-- Статус -->
                 <StackPanel Grid.Row="2">
                     <ProgressBar IsIndeterminate="True" 
                                  Height="3" 
@@ -96,7 +94,7 @@
                                TextWrapping="Wrap"/>
                 </StackPanel>
 
-                <!-- Таблиця даних -->
+                <!-- Таблиця -->
                 <DataGrid Grid.Row="3" 
                           ItemsSource="{Binding ApiSearchResults}" 
                           SelectedItem="{Binding SelectedApiProduct}" 
@@ -107,21 +105,21 @@
                           BorderThickness="1" 
                           BorderBrush="{StaticResource BorderBrush}">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Назва / Бренд" Binding="{Binding Name}" Width="*"/>
-                        <DataGridTextColumn Header="Ккал / 100г" Binding="{Binding Calories, StringFormat={}{0:F0}}" Width="100"/>
-                        <DataGridTextColumn Header="Б" Binding="{Binding Proteins, StringFormat={}{0:F1}}" Width="60"/>
-                        <DataGridTextColumn Header="Ж" Binding="{Binding Fats, StringFormat={}{0:F1}}" Width="60"/>
-                        <DataGridTextColumn Header="В" Binding="{Binding Carbs, StringFormat={}{0:F1}}" Width="60"/>
+                        <DataGridTextColumn Header="{DynamicResource Api_Col_NameBrand}" Binding="{Binding Name}" Width="*"/>
+                        <DataGridTextColumn Header="{DynamicResource Api_Col_Kcal}" Binding="{Binding Calories, StringFormat={}{0:F0}}" Width="100"/>
+                        <DataGridTextColumn Header="{DynamicResource Dash_Proteins}" Binding="{Binding Proteins, StringFormat={}{0:F1}}" Width="60"/>
+                        <DataGridTextColumn Header="{DynamicResource Dash_Fats}" Binding="{Binding Fats, StringFormat={}{0:F1}}" Width="60"/>
+                        <DataGridTextColumn Header="{DynamicResource Dash_Carbs}" Binding="{Binding Carbs, StringFormat={}{0:F1}}" Width="60"/>
                     </DataGrid.Columns>
                 </DataGrid>
 
-                <!-- Кнопки дій -->
+                <!-- Кнопки -->
                 <WrapPanel Grid.Row="4" HorizontalAlignment="Right" VerticalAlignment="Center">
                     <Button Content="{DynamicResource Btn_Cancel}" 
                             Click="CloseButton_Click" 
                             Style="{StaticResource SecondaryButtonStyle}" 
                             Margin="0,0,8,0"/>
-                    <Button Content="➕ Зберегти в локальний каталог" 
+                    <Button Content="{DynamicResource Api_SaveToLocal}" 
                             Command="{Binding ImportApiProductCommand}" 
                             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}" 
                             IsEnabled="{Binding IsNotApiLoading}" 

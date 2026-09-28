@@ -12,6 +12,11 @@
     <SolidColorBrush x:Key="SidebarHoverBrush" Color="#253C30" /> 
     <SolidColorBrush x:Key="SidebarSelectedBrush" Color="#2F8F67" /> 
     <SolidColorBrush x:Key="SidebarDividerBrush" Color="#2F3E35" />
+    
+    <SolidColorBrush x:Key="CaloriesBrush" Color="#E11D48" />
+    <SolidColorBrush x:Key="ProteinsBrush" Color="#2563EB" />
+    <SolidColorBrush x:Key="FatsBrush" Color="#D97706" />
+    <SolidColorBrush x:Key="CarbsBrush" Color="#059669" />
 
     <!-- Typography -->
     <SolidColorBrush x:Key="TextPrimaryBrush" Color="#17211B" />
@@ -45,12 +50,6 @@
     <CornerRadius x:Key="RadiusMedium">12</CornerRadius>
     <CornerRadius x:Key="RadiusLarge">18</CornerRadius>
     
-    <!-- Макронутрієнти (КБЖУ) -->
-    <SolidColorBrush x:Key="CaloriesBrush" Color="#2F8F67" />
-    <SolidColorBrush x:Key="ProteinsBrush" Color="#4C7AD9" />
-    <SolidColorBrush x:Key="FatsBrush" Color="#C9912B" />
-    <SolidColorBrush x:Key="CarbsBrush" Color="#7B64C5" />
-
     <Thickness x:Key="PagePadding">28</Thickness>
     <Thickness x:Key="CardPadding">20</Thickness>
 </ResourceDictionary>
