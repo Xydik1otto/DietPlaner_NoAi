@@ -8,7 +8,6 @@
     <UseWPF>true</UseWPF>
   </PropertyGroup>
 
-  <!-- Keep the test project sources out of the WPF application project. -->
   <ItemGroup>
     <Compile Remove="DietPlanner.Tests\**\*.cs" />
   </ItemGroup>
@@ -24,7 +23,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-  
+
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
