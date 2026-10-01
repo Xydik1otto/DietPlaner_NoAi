@@ -70,7 +70,6 @@ public partial class App : Application
 
     private static void ConfigureServices(IServiceCollection services)
     {
-        // 1. Інфраструктура та База даних
         services.AddSingleton<IAppPaths, AppPaths>();
         services.AddDbContextFactory<AppDbContext>((sp, options) =>
         {
@@ -79,7 +78,6 @@ public partial class App : Application
         });
         services.AddTransient<DbInitializer>();
 
-        // 2. Сервіси бізнес-логіки
         services.AddSingleton<ITokenService, TokenService>();
         services.AddTransient<IEmailService, EmailService>();
         services.AddSingleton<SessionService>();
@@ -103,8 +101,7 @@ public partial class App : Application
         services.AddScoped<IReportService, ReportService>();
         services.AddTransient<IStatisticsService, StatisticsService>();
         services.AddSingleton<IOpenFoodFactsService, OpenFoodFactsService>();
-        
-        // 3. ViewModels
+
         services.AddSingleton<MainWindowViewModel>();
         services.AddTransient<AuthViewModel>();
         services.AddTransient<DashboardViewModel>();
@@ -115,7 +112,6 @@ public partial class App : Application
         services.AddTransient<UndoHistoryViewModel>();
         services.AddTransient<AdminViewModel>();
 
-        // 4. Views
         services.AddSingleton<MainWindow>();
         services.AddTransient<AuthPage>();
         services.AddTransient<DashboardPage>();
