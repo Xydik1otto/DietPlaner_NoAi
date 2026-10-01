@@ -27,8 +27,9 @@ public sealed class PlanServiceTests
             var category = TestDataFactory.CreateGlobalCategory();
             db.Users.Add(user);
             db.Categories.Add(category);
-            db.Products.Add(TestDataFactory.CreateProduct(category.Id, "Chicken", 200m, 20m, 5m, 0m));
-            // The product category is not required by PlanService queries, so keep the seed minimal.
+            var chicken = TestDataFactory.CreateProduct(category.Id, "Chicken", 200m, 20m, 5m, 0m);
+            db.Products.Add(chicken);
+            db.UserCatalogProducts.Add(new UserCatalogProduct(user.Id, chicken.Id));
             await db.SaveChangesAsync();
         }
 
@@ -70,7 +71,9 @@ public sealed class PlanServiceTests
             var category = TestDataFactory.CreateGlobalCategory();
             db.Users.Add(user);
             db.Categories.Add(category);
-            db.Products.Add(TestDataFactory.CreateProduct(category.Id, "Chicken", 200m, 20m, 5m, 0m));
+            var chicken = TestDataFactory.CreateProduct(category.Id, "Chicken", 200m, 20m, 5m, 0m);
+            db.Products.Add(chicken);
+            db.UserCatalogProducts.Add(new UserCatalogProduct(user.Id, chicken.Id));
             await db.SaveChangesAsync();
         }
 
@@ -113,7 +116,9 @@ public sealed class PlanServiceTests
             var category = TestDataFactory.CreateGlobalCategory();
             db.Users.Add(user);
             db.Categories.Add(category);
-            db.Products.Add(TestDataFactory.CreateProduct(category.Id, "Chicken", 200m, 20m, 5m, 0m));
+            var chicken = TestDataFactory.CreateProduct(category.Id, "Chicken", 200m, 20m, 5m, 0m);
+            db.Products.Add(chicken);
+            db.UserCatalogProducts.Add(new UserCatalogProduct(user.Id, chicken.Id));
             await db.SaveChangesAsync();
         }
 

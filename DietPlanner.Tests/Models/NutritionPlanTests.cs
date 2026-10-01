@@ -51,7 +51,7 @@ public sealed class NutritionPlanTests
         plan.Items.Add(new PlanItem(MealType.Lunch, "Lunch", Guid.NewGuid(), null, 80m, "g", new NutritionSnapshot(100m, 3m, 1m, 10m)));
 
         Assert.Equal(1, plan.MealCount);
-        Assert.Equal(1, plan.Items.Select(item => item.MealName).Distinct(StringComparer.Ordinal).Count());
+        Assert.Single(plan.Items.Select(item => item.MealName).Distinct(StringComparer.Ordinal));
         Assert.Equal(3, plan.Items.Count);
     }
 

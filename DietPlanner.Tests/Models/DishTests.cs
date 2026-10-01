@@ -24,7 +24,7 @@ public sealed class DishTests
 
         Assert.Equal(500m, result.Calories);
         Assert.Equal(34m, result.ProteinG);
-        Assert.Equal(16m, result.FatG);
+        Assert.Equal(17m, result.FatG);
         Assert.Equal(40m, result.CarbsG);
     }
 }

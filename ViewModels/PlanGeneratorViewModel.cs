@@ -7,7 +7,7 @@ using DietPlanner.Services.Contracts;
 
 namespace DietPlanner.ViewModels;
 
-public class MealSlotDisplayDto
+public class MealSlotDisplayDto : ObservableObject
 {
     public Guid PlanItemId { get; set; }
     public string SlotName { get; set; } = string.Empty;
@@ -19,6 +19,10 @@ public class MealSlotDisplayDto
     public double Carbs { get; set; }
     public Guid? ProductId { get; set; }
     public Guid? DishId { get; set; }
+
+    public int ComponentCount { get; set; } = 1;
+    public bool IsMultiComponent => ComponentCount > 1;
+    public string MultiComponentNote { get; set; } = string.Empty;
 }
 
 public partial class PlanGeneratorViewModel : ViewModelBase
@@ -28,10 +32,10 @@ public partial class PlanGeneratorViewModel : ViewModelBase
     private readonly INutritionCalculator _calculator;
     private readonly IProductService _productService;
     private readonly IDishService _dishService;
+    private readonly ILocalizationService _loc;
 
     [ObservableProperty] private int _mealCount = 4;
     
-    // Діапазон калорій із профілю (ручне введення виключено)
     [ObservableProperty] private decimal _calculatedTargetCalories = 2000m;
     [ObservableProperty] private string _calorieRangeText = "1900 – 2100 ккал/день";
 
@@ -43,7 +47,6 @@ public partial class PlanGeneratorViewModel : ViewModelBase
     [ObservableProperty] private string _userSummaryInfo = string.Empty;
     [ObservableProperty] private string _statusMessage = string.Empty;
 
-    // Модальне вікно заміни
     [ObservableProperty] private bool _isReplaceDialogOpen;
     [ObservableProperty] private MealSlotDisplayDto? _selectedSlotToReplace;
     [ObservableProperty] private ObservableCollection<FoodItemDisplayDto> _availableReplacementItems = new();
@@ -55,13 +58,15 @@ public partial class PlanGeneratorViewModel : ViewModelBase
         IAuthenticationService authService,
         INutritionCalculator calculator,
         IProductService productService,
-        IDishService dishService)
+        IDishService dishService,
+        ILocalizationService loc)
     {
         _planService = planService;
         _authService = authService;
         _calculator = calculator;
         _productService = productService;
         _dishService = dishService;
+        _loc = loc;
 
         LoadUserProfileAndTargets();
     }
@@ -147,34 +152,55 @@ public partial class PlanGeneratorViewModel : ViewModelBase
         if (value == null) return;
 
         GeneratedSlots.Clear();
-        foreach (var item in value.Items)
+
+        if (value.Items != null && value.Items.Count > 0)
         {
-            GeneratedSlots.Add(new MealSlotDisplayDto
+            var multiNoteFormat = _loc.GetString("Plan_MultiComponentNoteFormat");
+            var dishPrefixFormat = _loc.GetString("Plan_DishPrefixFormat");
+
+            var grouped = value.Items
+                .GroupBy(x => x.MealName)
+                .Select(group =>
+                {
+                    var first = group.First();
+                    var names = group.Select(item =>
+                        item.Dish != null ? string.Format(dishPrefixFormat, item.Dish.Name) : (item.Product?.Name ?? item.MealName));
+
+                    var count = group.Count();
+
+                    return new MealSlotDisplayDto
+                    {
+                        PlanItemId = first.Id,
+                        SlotName = group.Key,
+                        SuggestedItemName = string.Join(" + ", names),
+                        PortionGrams = (double)group.Sum(x => x.PortionAmount),
+                        Calories = (double)group.Sum(x => x.Calories),
+                        Proteins = (double)group.Sum(x => x.ProteinG),
+                        Fats = (double)group.Sum(x => x.FatG),
+                        Carbs = (double)group.Sum(x => x.CarbsG),
+                        ProductId = first.ProductId,
+                        DishId = first.DishId,
+                        ComponentCount = count,
+                        MultiComponentNote = count > 1 ? string.Format(multiNoteFormat, count) : string.Empty
+                    };
+                });
+
+            foreach (var slot in grouped)
             {
-                PlanItemId = item.Id,
-                SlotName = item.MealName,
-                SuggestedItemName = item.Dish != null ? $"[Страва] {item.Dish.Name}" : (item.Product?.Name ?? item.MealName),
-                PortionGrams = (double)item.PortionAmount,
-                Calories = (double)item.Calories,
-                Proteins = (double)item.ProteinG,
-                Fats = (double)item.FatG,
-                Carbs = (double)item.CarbsG,
-                ProductId = item.ProductId,
-                DishId = item.DishId
-            });
+                GeneratedSlots.Add(slot);
+            }
         }
 
-        GenerationResultSummary = $"Завантажено раціон від {value.PlanDate:dd.MM.yyyy} ({value.TargetCalories:F0} ккал).";
+        GenerationResultSummary = string.Format(_loc.GetString("Plan_SummaryLoadedFormat"), value.PlanDate, value.TargetCalories);
     }
 
-    // --- КНОПКА: ЗГЕНЕРУАТИ НА ДЕНЬ ---
     [RelayCommand]
     public async Task GenerateDayPlanAsync(CancellationToken cancellationToken = default)
     {
         var user = _authService.CurrentUser;
         if (user == null) return;
 
-        StatusMessage = "⚡ Генеруємо оптимальний раціон на день...";
+        StatusMessage = _loc.GetString("Plan_StatusGeneratingDay");
         
         var result = await _planService.GenerateAsync(user.Id, MealCount, CalculatedTargetCalories, cancellationToken);
 
@@ -187,14 +213,13 @@ public partial class PlanGeneratorViewModel : ViewModelBase
         SelectedHistoryPlan = PlanHistory.FirstOrDefault(p => p.Id == result.Plan.Id);
     }
 
-    // --- КНОПКА: ЗГЕНЕРУАТИ НА ТИЖДЕНЬ (7 ДНІВ) ---
     [RelayCommand]
     public async Task GenerateWeekPlanAsync(CancellationToken cancellationToken = default)
     {
         var user = _authService.CurrentUser;
         if (user == null) return;
 
-        StatusMessage = "📅 Генеруємо різноманітне меню на 7 днів...";
+        StatusMessage = _loc.GetString("Plan_StatusGeneratingWeek");
 
         var results = await _planService.GenerateWeekAsync(user.Id, MealCount, CalculatedTargetCalories, cancellationToken);
 
@@ -203,8 +228,8 @@ public partial class PlanGeneratorViewModel : ViewModelBase
         if (results.Count > 0 && results[0].Plan != null)
         {
             SelectedHistoryPlan = PlanHistory.FirstOrDefault(p => p.Id == results[0].Plan!.Id);
-            StatusMessage = $"🎉 Успішно створено меню на 7 днів! Оберіть необхідну дату зі списку нижче.";
-            GenerationResultSummary = $"Сформовано 7 унікальних раціонів тижня.";
+            StatusMessage = _loc.GetString("Plan_StatusWeekSuccess");
+            GenerationResultSummary = _loc.GetString("Plan_SummaryWeekSuccess");
         }
     }
 
@@ -225,8 +250,8 @@ public partial class PlanGeneratorViewModel : ViewModelBase
             items.Add(new FoodItemDisplayDto
             {
                 Id = d.Id,
-                Name = $"[Страва] {d.Name} ({nutr.Calories:F0} ккал/100г)",
-                CategoryName = d.Category?.Name ?? "Страва",
+                Name = $"[{_loc.GetString("Meal_DishCategoryDefault")}] {d.Name} ({nutr.Calories:F0} {_loc.GetString("Unit_Kcal")}/100{_loc.GetString("Unit_Grams")})",
+                CategoryName = d.Category?.Name ?? _loc.GetString("Meal_DishCategoryDefault"),
                 Calories = (double)nutr.Calories,
                 Proteins = (double)nutr.ProteinG,
                 Fats = (double)nutr.FatG,
@@ -241,8 +266,8 @@ public partial class PlanGeneratorViewModel : ViewModelBase
             items.Add(new FoodItemDisplayDto
             {
                 Id = p.Id,
-                Name = $"{p.Name} ({p.Calories:F0} ккал/100г)",
-                CategoryName = p.Category?.Name ?? "Продукт",
+                Name = $"{p.Name} ({p.Calories:F0} {_loc.GetString("Unit_Kcal")}/100{_loc.GetString("Unit_Grams")})",
+                CategoryName = p.Category?.Name ?? _loc.GetString("Meal_ProductCategoryDefault"),
                 Calories = (double)p.Calories,
                 Proteins = (double)p.ProteinG,
                 Fats = (double)p.FatG,
@@ -268,7 +293,7 @@ public partial class PlanGeneratorViewModel : ViewModelBase
 
         if (!decimal.TryParse(ReplacePortionGramsInput, out var grams) || grams <= 0)
         {
-            StatusMessage = "Вкажіть масу у грамах більше 0.";
+            StatusMessage = _loc.GetString("Plan_ValidGramsRequired");
             return;
         }
 

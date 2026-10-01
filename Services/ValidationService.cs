@@ -67,9 +67,44 @@ public sealed class ValidationService : IValidationService
             return required;
         }
 
+        var email = value!.Trim();
+
         try
         {
-            _ = new MailAddress(value!.Trim());
+            var parsed = new MailAddress(email);
+
+            // MailAddress is intentionally permissive and may accept strings such as
+            // display names or addresses with malformed dot/whitespace placement.
+            // Registration/email-change input needs a single concrete mailbox address.
+            if (!string.Equals(parsed.Address, email, StringComparison.OrdinalIgnoreCase))
+            {
+                return [string.Format(_loc.GetString("Val_InvalidEmailFormat"), fieldName)];
+            }
+
+            var atIndex = email.IndexOf('@');
+            if (atIndex <= 0 || atIndex != email.LastIndexOf('@') || atIndex == email.Length - 1)
+            {
+                return [string.Format(_loc.GetString("Val_InvalidEmailFormat"), fieldName)];
+            }
+
+            var localPart = email[..atIndex];
+            var domain = email[(atIndex + 1)..];
+
+            if (localPart.StartsWith('.') || localPart.EndsWith('.') || localPart.Contains("..") ||
+                localPart.Any(char.IsWhiteSpace) || domain.Any(char.IsWhiteSpace))
+            {
+                return [string.Format(_loc.GetString("Val_InvalidEmailFormat"), fieldName)];
+            }
+
+            var labels = domain.Split('.', StringSplitOptions.None);
+            if (labels.Length < 2 || labels.Any(static label =>
+                    label.Length == 0 ||
+                    label.StartsWith('-') ||
+                    label.EndsWith('-')))
+            {
+                return [string.Format(_loc.GetString("Val_InvalidEmailFormat"), fieldName)];
+            }
+
             return Array.Empty<string>();
         }
         catch (FormatException)

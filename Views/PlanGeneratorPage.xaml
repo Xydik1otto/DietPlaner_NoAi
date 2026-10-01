@@ -76,28 +76,53 @@
             </Border>
 
             <Border Grid.Row="3" Style="{StaticResource CardBorderStyle}" Padding="12">
-                <DataGrid ItemsSource="{Binding GeneratedSlots}" AutoGenerateColumns="False" IsReadOnly="True" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#EAEAEA" RowHeight="40" Background="Transparent" BorderThickness="0">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="{DynamicResource Dash_ColSlot}" Binding="{Binding SlotName}" Width="130" />
-                        <DataGridTextColumn Header="{DynamicResource Plan_ColDishRec}" Binding="{Binding SuggestedItemName}" Width="*" />
-                        <DataGridTextColumn Header="{DynamicResource Dash_ColPortion}" Binding="{Binding PortionGrams, StringFormat={}{0:F0} г}" Width="90" />
-                        <DataGridTextColumn Header="{DynamicResource Dash_Calories}" Binding="{Binding Calories, StringFormat={}{0:F0}}" Width="80" />
-                        <DataGridTextColumn Header="{DynamicResource Dash_Proteins}" Binding="{Binding Proteins, StringFormat={}{0:F1}}" Width="65" />
-                        <DataGridTextColumn Header="{DynamicResource Dash_Fats}" Binding="{Binding Fats, StringFormat={}{0:F1}}" Width="65" />
-                        <DataGridTextColumn Header="{DynamicResource Dash_Carbs}" Binding="{Binding Carbs, StringFormat={}{0:F1}}" Width="65" />
-                        <DataGridTemplateColumn Width="120">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <Button Content="{DynamicResource Btn_Replace}" 
-                                            Command="{Binding DataContext.OpenReplaceDialogCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
-                                            CommandParameter="{Binding}" 
-                                            Style="{StaticResource SecondaryButtonStyle}" 
-                                            Padding="8,4" FontSize="11" HorizontalAlignment="Center"/>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                    </DataGrid.Columns>
-                </DataGrid>
+               
+              <DataGrid ItemsSource="{Binding GeneratedSlots}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="{DynamicResource Dash_ColSlot}" Binding="{Binding SlotName}" Width="Auto" MinWidth="100" ElementStyle="{StaticResource GridTextCellSemi}"/>
+
+                    <DataGridTemplateColumn Header="{DynamicResource Plan_ColDishRec}" Width="*" MinWidth="220">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding SuggestedItemName}"
+                                               FontWeight="SemiBold"
+                                               Foreground="{StaticResource TextPrimaryBrush}"
+                                               TextWrapping="Wrap"/>
+                                    <Border Visibility="{Binding IsMultiComponent, Converter={StaticResource BoolToVisibilityConverter}}"
+                                            Background="{StaticResource AmberSoftBrush}"
+                                            CornerRadius="4" Padding="6,2" Margin="0,4,0,0"
+                                            HorizontalAlignment="Left">
+                                        <TextBlock Text="{Binding MultiComponentNote}"
+                                                   FontSize="11" FontWeight="SemiBold"
+                                                   Foreground="#8A5A00"
+                                                   TextWrapping="Wrap"/>
+                                    </Border>
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTextColumn Header="{DynamicResource Dash_ColPortion}" Binding="{Binding PortionGrams, StringFormat={}{0:F0} г}" Width="Auto" MinWidth="80" HeaderStyle="{StaticResource GridHeaderRight}" ElementStyle="{StaticResource GridNumCell}"/>
+                    <DataGridTextColumn Header="{DynamicResource Dash_Calories}" Binding="{Binding Calories, StringFormat={}{0:F0}}" Width="Auto" MinWidth="80" HeaderStyle="{StaticResource GridHeaderRight}" ElementStyle="{StaticResource GridNumCellStrong}"/>
+                    <DataGridTextColumn Header="{DynamicResource Dash_Proteins}" Binding="{Binding Proteins, StringFormat={}{0:F1}}" Width="Auto" MinWidth="70" HeaderStyle="{StaticResource GridHeaderRight}" ElementStyle="{StaticResource GridNumCell}"/>
+                    <DataGridTextColumn Header="{DynamicResource Dash_Fats}" Binding="{Binding Fats, StringFormat={}{0:F1}}" Width="Auto" MinWidth="70" HeaderStyle="{StaticResource GridHeaderRight}" ElementStyle="{StaticResource GridNumCell}"/>
+                    <DataGridTextColumn Header="{DynamicResource Dash_Carbs}" Binding="{Binding Carbs, StringFormat={}{0:F1}}" Width="Auto" MinWidth="90" HeaderStyle="{StaticResource GridHeaderRight}" ElementStyle="{StaticResource GridNumCell}"/>
+
+                    <DataGridTemplateColumn Width="Auto" MinWidth="100">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Content="{DynamicResource Btn_Replace}"
+                                        Command="{Binding DataContext.OpenReplaceDialogCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                        CommandParameter="{Binding}"
+                                        Style="{StaticResource SecondaryButtonStyle}"
+                                        Padding="10,4" FontSize="11"
+                                        HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
             </Border>
 
             <Grid Grid.RowSpan="4" Background="{StaticResource OverlayBrush}" Visibility="{Binding IsReplaceDialogOpen, Converter={StaticResource BoolToVisibilityConverter}}">

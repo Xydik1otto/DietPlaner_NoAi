@@ -10,8 +10,10 @@ public sealed class RestrictionServiceTests
     public async Task ForbiddenProductRestriction_BlocksThenAllowsProductAfterRemoval()
     {
         await using var factory = await InMemoryDbContextFactory.CreateAsync();
-        var service = new RestrictionService(factory, new NoOpLoggingService(), new StubLocalizationService());
+        var session = new SessionService();
         var user = TestDataFactory.CreateUser();
+        session.SignIn(user);
+        var service = new RestrictionService(factory, new NoOpLoggingService(), new StubLocalizationService(), session);
         var category = TestDataFactory.CreateGlobalCategory();
         var product = TestDataFactory.CreateProduct(category.Id, "Milk");
 
@@ -38,8 +40,10 @@ public sealed class RestrictionServiceTests
     public async Task AllergenRestriction_BlocksProductContainingAllergen()
     {
         await using var factory = await InMemoryDbContextFactory.CreateAsync();
-        var service = new RestrictionService(factory, new NoOpLoggingService(), new StubLocalizationService());
+        var session = new SessionService();
         var user = TestDataFactory.CreateUser();
+        session.SignIn(user);
+        var service = new RestrictionService(factory, new NoOpLoggingService(), new StubLocalizationService(), session);
         var category = TestDataFactory.CreateGlobalCategory();
         var product = TestDataFactory.CreateProduct(category.Id, "Yogurt");
         product.SetAllergens(["milk"]);

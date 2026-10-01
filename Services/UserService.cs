@@ -71,6 +71,7 @@ public sealed class UserService : IUserService
 
     public async Task UpdateProfileAsync(User user, CancellationToken cancellationToken = default)
     {
+        EnsureCanManageUser(user.Id);
         await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
         var stored = await db.Users.SingleOrDefaultAsync(x => x.Id == user.Id, cancellationToken)
             ?? throw new KeyNotFoundException(_loc.GetString("Err_UserNotFound"));
@@ -101,6 +102,7 @@ public sealed class UserService : IUserService
 
     public async Task DeleteAsync(Guid userId, CancellationToken cancellationToken = default)
     {
+        EnsureCanManageUser(userId);
         await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
         var user = await db.Users.SingleOrDefaultAsync(x => x.Id == userId, cancellationToken)
             ?? throw new KeyNotFoundException(_loc.GetString("Err_UserNotFound"));
@@ -150,6 +152,16 @@ public sealed class UserService : IUserService
             "User",
             userId,
             cancellationToken: cancellationToken);
+    }
+
+
+    private void EnsureCanManageUser(Guid userId)
+    {
+        if (!_session.IsAuthenticated || _session.CurrentUser is null)
+            throw new UnauthorizedAccessException(_loc.GetString("Err_Unauthorized"));
+
+        if (_session.CurrentUser.Role != UserRole.Admin && _session.CurrentUser.Id != userId)
+            throw new UnauthorizedAccessException(_loc.GetString("Err_Unauthorized"));
     }
 
     private void EnsureAdmin()

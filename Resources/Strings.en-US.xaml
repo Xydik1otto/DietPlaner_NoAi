@@ -1,6 +1,7 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib"
+                    xmlns:system="clr-namespace:System;assembly=System.Runtime">
 
     <!-- Navigation & Common -->
     <sys:String x:Key="App_Title">DietPlanner — Nutrition Planner</sys:String>
@@ -192,6 +193,14 @@
     <sys:String x:Key="Cat_DishIngredientsTitle">Dish Ingredients (by weight)</sys:String>
 
     <!-- Plan Generator -->
+    <system:String x:Key="Plan_MultiComponentNoteFormat">⚠️ This is a single meal consisting of {0} ingredients</system:String>
+    <system:String x:Key="Plan_StatusGeneratingDay">⚡ Generating optimal daily diet...</system:String>
+    <system:String x:Key="Plan_StatusGeneratingWeek">📅 Generating diverse 7-day menu...</system:String>
+    <system:String x:Key="Plan_StatusWeekSuccess">🎉 Successfully created a 7-day menu! Select a date from the list below.</system:String>
+    <system:String x:Key="Plan_SummaryWeekSuccess">Generated 7 unique daily diets for the week.</system:String>
+    <system:String x:Key="Plan_SummaryLoadedFormat">Loaded meal plan from {0:dd.MM.yyyy} ({1:F0} kcal).</system:String>
+    <system:String x:Key="Plan_DishPrefixFormat">[Dish] {0}</system:String>
+    <system:String x:Key="Plan_ValidGramsRequired">Please specify weight in grams greater than 0.</system:String>
     <sys:String x:Key="Plan_Title">Meal Plan Generator</sys:String>
     <sys:String x:Key="Plan_Subtitle">Automated daily or weekly diet generation based on your profile settings.</sys:String>
     <sys:String x:Key="Plan_Params">Generation Settings</sys:String>
@@ -255,6 +264,16 @@
     <sys:String x:Key="Admin_TabUsers">👥 User Management</sys:String>
     <sys:String x:Key="Admin_TabLogs">🪵 System Logs</sys:String>
     <sys:String x:Key="Admin_TabBroadcast">📢 System Broadcast</sys:String>
+    <system:String x:Key="Admin_BtnRefreshUsers">🔄 Refresh list</system:String>
+    <system:String x:Key="Admin_BtnRefreshLogs">🔄 Refresh logs</system:String>
+    <system:String x:Key="Admin_BroadcastActiveFormat">🟢 Active announcement: "{0}"</system:String>
+    <system:String x:Key="Admin_BroadcastNone">⚪ No active announcement</system:String>
+    <system:String x:Key="Admin_BroadcastSent">📢 Announcement published successfully!</system:String>
+    <system:String x:Key="Admin_BroadcastCleared">🗑️ Announcement cleared</system:String>
+    <system:String x:Key="Admin_NoCriticalLogs">✅ No critical errors found.</system:String>
+    <system:String x:Key="Admin_CriticalErrorsDetected">🚨 Critical errors detected in system logs!</system:String>
+    <system:String x:Key="Admin_CriticalErrorHeader">Warning! Critical Errors</system:String>
+    <system:String x:Key="Admin_BroadcastHeaderTitle">System Announcement</system:String>
 
     <sys:String x:Key="Admin_StatTotalUsers">Total Users</sys:String>
     <sys:String x:Key="Admin_StatActiveUsers">Active Users (30d)</sys:String>

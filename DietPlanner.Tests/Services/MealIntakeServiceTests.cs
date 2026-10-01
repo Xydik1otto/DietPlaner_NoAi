@@ -22,12 +22,15 @@ public sealed class MealIntakeServiceTests
             await db.SaveChangesAsync();
         }
 
+        var session = new SessionService();
+        session.SignIn(user);
         var service = new MealIntakeService(
             factory,
             new FixedNutritionCalculator(),
             new AllowAllRestrictionService(),
             new NoOpLoggingService(),
-            new StubLocalizationService());
+            new StubLocalizationService(),
+            session);
 
         await service.AddIntakeItemAsync(user.Id, product.Id, null, 100m);
         var afterAdd = await service.GetTodayIntakesAsync(user.Id);
@@ -66,12 +69,15 @@ public sealed class MealIntakeServiceTests
             await db.SaveChangesAsync();
         }
 
+        var session = new SessionService();
+        session.SignIn(user);
         var service = new MealIntakeService(
             factory,
             new FixedNutritionCalculator(),
             new AllowAllRestrictionService(),
             new NoOpLoggingService(),
-            new StubLocalizationService());
+            new StubLocalizationService(),
+            session);
 
         await service.AddIntakeItemAsync(user.Id, product.Id, null, 100m);
         await service.RemoveIntakeItemByFoodAsync(user.Id, product.Id, null, product.Name);

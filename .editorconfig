@@ -1,0 +1,9 @@
+root = true
+
+[*]
+charset = utf-8
+
+[DietPlanner.Tests/**/*.cs]
+# The test suite is short-lived and does not expose cooperative cancellation as a tested behavior.
+# Keep cancellation-token plumbing out of assertions/fixtures while retaining production cancellation support.
+dotnet_diagnostic.xUnit1051.severity = none

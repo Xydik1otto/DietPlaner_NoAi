@@ -106,7 +106,10 @@ internal sealed class FakeUserService : IUserService
     public FakeUserService(User? user = null) => _user = user;
 
     public Task<(bool Success, string Message, User? User)> RegisterAsync(string email, string displayName, string password, CancellationToken cancellationToken = default)
-        => Task.FromResult((true, "registered", new User(email, displayName, BCrypt.Net.BCrypt.HashPassword(password), UserRole.User)));
+        => Task.FromResult<(bool Success, string Message, User? User)>((
+            true,
+            "registered",
+            new User(email, displayName, BCrypt.Net.BCrypt.HashPassword(password), UserRole.User)));
 
     public Task<User?> FindByEmailAsync(string email, CancellationToken cancellationToken = default)
         => Task.FromResult(_user is not null && _user.Email.Equals(email.Trim(), StringComparison.OrdinalIgnoreCase) ? _user : null);

@@ -24,6 +24,7 @@ public class StatisticsService : IStatisticsService
 
     public async Task<List<DailyStatItem>> GetDailyStatsAsync(Guid userId, DateTime date)
     {
+        EnsureCanViewUserStats(userId);
         await using var db = await _dbFactory.CreateDbContextAsync();
         var targetDate = date.Date;
 
@@ -53,6 +54,7 @@ public class StatisticsService : IStatisticsService
 
     public async Task<List<DailyStatItem>> GetWeeklyStatsAsync(Guid userId, DateTime startDate, DateTime endDate)
     {
+        EnsureCanViewUserStats(userId);
         await using var db = await _dbFactory.CreateDbContextAsync();
 
         var intakes = await db.MealIntakes
@@ -86,6 +88,7 @@ public class StatisticsService : IStatisticsService
 
     public async Task<List<DailyStatItem>> GetMonthlyStatsAsync(Guid userId, int year, int month)
     {
+        EnsureCanViewUserStats(userId);
         DateTime start = new DateTime(year, month, 1);
         DateTime end = new DateTime(year, month, DateTime.DaysInMonth(year, month));
         return await GetWeeklyStatsAsync(userId, start, end);
@@ -104,4 +107,13 @@ public class StatisticsService : IStatisticsService
         return new AdminStatisticsSnapshot(totalUsers, usersWithLogin, totalPlans);
     }
 
+
+    private void EnsureCanViewUserStats(Guid userId)
+    {
+        if (!_session.IsAuthenticated || _session.CurrentUser is null)
+            throw new UnauthorizedAccessException(_loc.GetString("Err_Unauthorized"));
+
+        if (_session.CurrentUser.Role != UserRole.Admin && _session.CurrentUser.Id != userId)
+            throw new UnauthorizedAccessException(_loc.GetString("Err_Unauthorized"));
+    }
 }

@@ -41,7 +41,7 @@ public sealed partial class AdminViewModel : ViewModelBase
     [ObservableProperty] private int _totalPlansCount;
 
     [ObservableProperty] private string _broadcastText = string.Empty;
-    [ObservableProperty] private string _activeBroadcastStatus = "⚪ Поточне сповіщення відсутнє";
+    [ObservableProperty] private string _activeBroadcastStatus = string.Empty;
 
     public AdminViewModel(
         IUserService userService,
@@ -57,6 +57,8 @@ public sealed partial class AdminViewModel : ViewModelBase
         _paths = paths;
         _loc = loc;
         _statisticsService = statisticsService;
+
+        _activeBroadcastStatus = _loc.GetString("Admin_BroadcastNone");
     }
 
     public async Task InitializeAsync()
@@ -73,21 +75,20 @@ public sealed partial class AdminViewModel : ViewModelBase
         await LoadLogsAsync();
     }
 
-    // ⚡ Автоматичний виклик при перемиканні вкладок у UI
     public async Task OnTabChangedAsync(int tabIndex)
     {
         if (!HasAdminAccess) return;
 
         switch (tabIndex)
         {
-            case 0: // Статистика
-            case 1: // Користувачі
+            case 0:
+            case 1:
                 await LoadUsersAndStatsAsync();
                 break;
-            case 2: // Логи
+            case 2:
                 await LoadLogsAsync();
                 break;
-            case 3: // Глобальне сповіщення
+            case 3:
                 LoadCurrentBroadcast();
                 break;
         }
@@ -104,14 +105,14 @@ public sealed partial class AdminViewModel : ViewModelBase
                 if (!string.IsNullOrEmpty(text))
                 {
                     BroadcastText = text;
-                    ActiveBroadcastStatus = $"🟢 Активне сповіщення: \"{text}\"";
+                    ActiveBroadcastStatus = string.Format(_loc.GetString("Admin_BroadcastActiveFormat"), text);
                     return;
                 }
             }
         }
         catch { }
 
-        ActiveBroadcastStatus = "⚪ Поточне сповіщення відсутнє";
+        ActiveBroadcastStatus = _loc.GetString("Admin_BroadcastNone");
     }
 
     private string GetLocalizedRoleName(UserRole role)
@@ -194,8 +195,8 @@ public sealed partial class AdminViewModel : ViewModelBase
     {
         try
         {
-            const string noCritStr = "✅ Критичних помилок не виявлено.";
-            const string noLogsStr = "ℹ️ Логи дій користувачів відсутні.";
+            string noCritStr = _loc.GetString("Admin_NoCriticalLogs");
+            string noLogsStr = _loc.GetString("Admin_NoUserLogs");
 
             if (!Directory.Exists(_paths.LogsDirectory))
             {
@@ -260,8 +261,8 @@ public sealed partial class AdminViewModel : ViewModelBase
 
         File.WriteAllText(broadcastPath, BroadcastText, Encoding.UTF8);
 
-        ActiveBroadcastStatus = $"🟢 Активне сповіщення: \"{BroadcastText}\"";
-        StatusMessage = "📢 Оголошення успішно опубліковано!";
+        ActiveBroadcastStatus = string.Format(_loc.GetString("Admin_BroadcastActiveFormat"), BroadcastText);
+        StatusMessage = _loc.GetString("Admin_BroadcastSent");
     }
 
     [RelayCommand]
@@ -274,8 +275,8 @@ public sealed partial class AdminViewModel : ViewModelBase
         if (File.Exists(broadcastPath)) File.Delete(broadcastPath);
         if (File.Exists(dismissedPath)) File.Delete(dismissedPath);
 
-        ActiveBroadcastStatus = "⚪ Поточне сповіщення відсутнє";
-        StatusMessage = "🗑️ Оголошення видалено";
+        ActiveBroadcastStatus = _loc.GetString("Admin_BroadcastNone");
+        StatusMessage = _loc.GetString("Admin_BroadcastCleared");
     }
 
     [RelayCommand]

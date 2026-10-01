@@ -8,6 +8,15 @@ using DietPlanner.Services.Contracts;
 
 namespace DietPlanner.ViewModels;
 
+public class PlanSubItemDto
+{
+    public Guid PlanItemId { get; set; }
+    public string ItemName { get; set; } = string.Empty;
+    public double PortionGrams { get; set; }
+    public Guid? ProductId { get; set; }
+    public Guid? DishId { get; set; }
+}
+
 public class TodayPlanItemDisplayDto : ObservableObject
 {
     public Guid PlanItemId { get; set; }
@@ -20,6 +29,12 @@ public class TodayPlanItemDisplayDto : ObservableObject
     public double Carbs { get; set; }
     public Guid? ProductId { get; set; }
     public Guid? DishId { get; set; }
+
+    public int ComponentCount { get; set; } = 1;
+    public bool IsMultiComponent => ComponentCount > 1;
+    public string MultiComponentNote { get; set; } = string.Empty;
+
+    public List<PlanSubItemDto> SubItems { get; set; } = new();
 
     private bool _isEaten;
     public bool IsEaten
@@ -155,33 +170,59 @@ public partial class DashboardViewModel : ViewModelBase
 
         var intakes = TodayIntakes ?? new ObservableCollection<MealIntakeDisplayDto>();
         var planDtos = new List<TodayPlanItemDisplayDto>();
+        var multiNoteFormat = _loc.GetString("Plan_MultiComponentNoteFormat");
 
-        if (plan.Items != null)
+        if (plan.Items != null && plan.Items.Count > 0)
         {
-            foreach (var item in plan.Items)
-            {
-                var itemName = item.Product?.Name ?? item.Dish?.Name ?? item.MealName;
-                
-                bool isAlreadyEaten = intakes.Any(i => 
-                    (item.ProductId.HasValue && i.ProductId == item.ProductId) ||
-                    (item.DishId.HasValue && i.DishId == item.DishId) ||
-                    i.ItemName.Equals(itemName, StringComparison.OrdinalIgnoreCase));
-
-                planDtos.Add(new TodayPlanItemDisplayDto
+            var grouped = plan.Items
+                .GroupBy(i => i.MealName)
+                .Select(group =>
                 {
-                    PlanItemId = item.Id,
-                    MealName = item.MealName,
-                    ItemName = itemName,
-                    PortionGrams = (double)item.PortionAmount,
-                    Calories = (double)item.Calories,
-                    Proteins = (double)item.ProteinG,
-                    Fats = (double)item.FatG,
-                    Carbs = (double)item.CarbsG,
-                    ProductId = item.ProductId,
-                    DishId = item.DishId,
-                    IsEaten = isAlreadyEaten
+                    var first = group.First();
+                    var subItemsList = new List<PlanSubItemDto>();
+                    var namesList = new List<string>();
+
+                    foreach (var sub in group)
+                    {
+                        var name = sub.Product?.Name ?? sub.Dish?.Name ?? sub.MealName;
+                        namesList.Add(name);
+                        subItemsList.Add(new PlanSubItemDto
+                        {
+                            PlanItemId = sub.Id,
+                            ItemName = name,
+                            PortionGrams = (double)sub.PortionAmount,
+                            ProductId = sub.ProductId,
+                            DishId = sub.DishId
+                        });
+                    }
+
+                    bool isAllEaten = subItemsList.All(sub => intakes.Any(i =>
+                        (sub.ProductId.HasValue && i.ProductId == sub.ProductId) ||
+                        (sub.DishId.HasValue && i.DishId == sub.DishId) ||
+                        i.ItemName.Equals(sub.ItemName, StringComparison.OrdinalIgnoreCase)));
+
+                    var count = group.Count();
+
+                    return new TodayPlanItemDisplayDto
+                    {
+                        PlanItemId = first.Id,
+                        MealName = group.Key,
+                        ItemName = string.Join(" + ", namesList),
+                        PortionGrams = (double)group.Sum(x => x.PortionAmount),
+                        Calories = (double)group.Sum(x => x.Calories),
+                        Proteins = (double)group.Sum(x => x.ProteinG),
+                        Fats = (double)group.Sum(x => x.FatG),
+                        Carbs = (double)group.Sum(x => x.CarbsG),
+                        ProductId = first.ProductId,
+                        DishId = first.DishId,
+                        ComponentCount = count,
+                        SubItems = subItemsList,
+                        IsEaten = isAllEaten,
+                        MultiComponentNote = count > 1 ? string.Format(multiNoteFormat, count) : string.Empty
+                    };
                 });
-            }
+
+            planDtos.AddRange(grouped);
         }
 
         TodayPlanItems = new ObservableCollection<TodayPlanItemDisplayDto>(planDtos);
@@ -557,9 +598,6 @@ public partial class DashboardViewModel : ViewModelBase
         {
             var cleanName = SelectedSuggestedMeal.Name.Replace("🌐 ", "").Trim();
             var products = await _productService.GetAllAsync();
-            // Suggestions may refer to a program-global product that the user has
-            // not added to the personal catalog yet. Keep the intake flow working
-            // without making global products appear in the personal catalog UI.
             if (products.Count == 0)
                 products = await _productService.GetGlobalAsync();
 
@@ -641,27 +679,6 @@ public partial class DashboardViewModel : ViewModelBase
         catch (Exception ex)
         {
             StatusMessage = string.Format(_loc.GetString("Dash_UndoError"), ex.Message);
-        }
-    }
-
-    [RelayCommand]
-    private async Task MarkPlanItemAsEatenAsync(TodayPlanItemDisplayDto? item)
-    {
-        if (item == null || item.IsEaten) return;
-
-        var user = _auth.CurrentUser;
-        if (user == null) return;
-
-        try
-        {
-            await _mealIntakeService.AddIntakeItemAsync(user.Id, item.ProductId, item.DishId, (decimal)item.PortionGrams);
-            item.IsEaten = true;
-            StatusMessage = string.Format(_loc.GetString("Dash_ItemAdded"), item.ItemName, item.PortionGrams);
-            await LoadDashboardDataAsync();
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = string.Format(_loc.GetString("Dash_ErrSave"), ex.Message);
         }
     }
 
@@ -750,12 +767,32 @@ public partial class DashboardViewModel : ViewModelBase
         {
             if (!item.IsEaten)
             {
-                await _mealIntakeService.AddIntakeItemAsync(user.Id, item.ProductId, item.DishId, (decimal)item.PortionGrams);
+                if (item.SubItems.Count > 0)
+                {
+                    foreach (var sub in item.SubItems)
+                    {
+                        await _mealIntakeService.AddIntakeItemAsync(user.Id, sub.ProductId, sub.DishId, (decimal)sub.PortionGrams);
+                    }
+                }
+                else
+                {
+                    await _mealIntakeService.AddIntakeItemAsync(user.Id, item.ProductId, item.DishId, (decimal)item.PortionGrams);
+                }
                 StatusMessage = string.Format(_loc.GetString("Dash_ItemAdded"), item.ItemName, item.PortionGrams);
             }
             else
             {
-                await _mealIntakeService.RemoveIntakeItemByFoodAsync(user.Id, item.ProductId, item.DishId, item.ItemName);
+                if (item.SubItems.Count > 0)
+                {
+                    foreach (var sub in item.SubItems)
+                    {
+                        await _mealIntakeService.RemoveIntakeItemByFoodAsync(user.Id, sub.ProductId, sub.DishId, sub.ItemName);
+                    }
+                }
+                else
+                {
+                    await _mealIntakeService.RemoveIntakeItemByFoodAsync(user.Id, item.ProductId, item.DishId, item.ItemName);
+                }
                 StatusMessage = string.Format(_loc.GetString("Dash_MarkUnchecked"), item.ItemName);
             }
 

@@ -76,16 +76,16 @@ public sealed class DishService : IDishService
             throw new UnauthorizedAccessException(_loc.GetString("Err_Unauthorized"));
         }
 
-        var productIds = input.Select(x => x.ProductId).Distinct().ToArray();
+        var productIds = input.Select(x => x.ProductId).Distinct().ToList();
         var count = await db.Products.CountAsync(x => productIds.Contains(x.Id) && x.IsActive && x.IsGlobal, cancellationToken);
-        if (count != productIds.Length)
+        if (count != productIds.Count)
             throw new KeyNotFoundException(_loc.GetString("Err_ProductNotFound"));
 
         if (currentUser.Role == UserRole.User)
         {
             var personalProductCount = await db.UserCatalogProducts
                 .CountAsync(link => link.UserId == currentUser.Id && productIds.Contains(link.ProductId), cancellationToken);
-            if (personalProductCount != productIds.Length)
+            if (personalProductCount != productIds.Count)
                 throw new InvalidOperationException(_loc.GetString("Err_ProductNotInPersonalCatalog"));
         }
 
@@ -150,16 +150,16 @@ public sealed class DishService : IDishService
             throw new UnauthorizedAccessException(_loc.GetString("Err_Unauthorized"));
         }
 
-        var productIds = input.Select(x => x.ProductId).Distinct().ToArray();
+        var productIds = input.Select(x => x.ProductId).Distinct().ToList();
         var count = await db.Products.CountAsync(x => productIds.Contains(x.Id) && x.IsActive && x.IsGlobal, cancellationToken);
-        if (count != productIds.Length)
+        if (count != productIds.Count)
             throw new KeyNotFoundException(_loc.GetString("Err_ProductNotFound"));
 
         if (currentUser.Role == UserRole.User)
         {
             var personalProductCount = await db.UserCatalogProducts
                 .CountAsync(link => link.UserId == currentUser.Id && productIds.Contains(link.ProductId), cancellationToken);
-            if (personalProductCount != productIds.Length)
+            if (personalProductCount != productIds.Count)
                 throw new InvalidOperationException(_loc.GetString("Err_ProductNotInPersonalCatalog"));
         }
 

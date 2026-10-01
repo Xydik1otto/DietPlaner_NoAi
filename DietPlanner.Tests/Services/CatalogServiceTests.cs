@@ -113,6 +113,7 @@ public sealed class CatalogServiceTests
             db.Users.AddRange(owner, other);
             db.Categories.Add(category);
             db.Products.Add(product);
+            db.UserCatalogProducts.Add(new UserCatalogProduct(owner.Id, product.Id));
             await db.SaveChangesAsync();
         }
 
@@ -121,10 +122,10 @@ public sealed class CatalogServiceTests
 
         Assert.Equal(owner.Id, dish.OwnerUserId);
         Assert.False(dish.IsGlobal);
-        Assert.True((await service.GetAllAsync()).Any(x => x.Id == dish.Id));
+        Assert.Contains((await service.GetAllAsync()), x => x.Id == dish.Id);
 
         session.SignIn(other);
-        Assert.False((await service.GetAllAsync()).Any(x => x.Id == dish.Id));
+        Assert.DoesNotContain((await service.GetAllAsync()), x => x.Id == dish.Id);
     }
 
     [Fact]

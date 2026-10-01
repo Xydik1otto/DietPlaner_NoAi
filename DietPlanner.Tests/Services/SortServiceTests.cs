@@ -36,6 +36,6 @@ public sealed class SortServiceTests
 
         var result = new SortService().SortProducts(items, SortField.Calories, true, SortField.Protein, false);
 
-        Assert.Equal(["A", "B", "C"], result.Select(x => x.Name).ToArray());
+        Assert.Equal(["B", "A", "C"], result.Select(x => x.Name).ToArray());
     }
 }

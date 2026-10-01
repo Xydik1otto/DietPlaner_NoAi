@@ -176,14 +176,14 @@
                                 </Grid.RowDefinitions>
 
                                 <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,16" VerticalAlignment="Center">
-                                    <Button Content="🔄 Оновити список" 
+                                    <Button Content="{DynamicResource Admin_BtnRefreshUsers}" 
                                             Command="{Binding LoadUsersAndStatsCommand}" 
                                             Style="{StaticResource PrimaryButtonStyle}" 
                                             Padding="14,8" Margin="0,0,16,0" />
 
                                     <Border Background="{StaticResource SurfaceSubtleBrush}" CornerRadius="8" Padding="12,6" VerticalAlignment="Center">
                                         <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="👥 Всього користувачів у системі: " FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{DynamicResource Admin_TotalUsersLabel}" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
                                             <TextBlock Text="{Binding TotalUsersCount}" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" FontSize="14" VerticalAlignment="Center"/>
                                         </StackPanel>
                                     </Border>
@@ -230,11 +230,11 @@
                                     <RowDefinition Height="*" />
                                 </Grid.RowDefinitions>
 
-                                <Button Grid.Row="0" Content="🔄 Оновити логи" 
+                                <Button Grid.Row="0" Content="{DynamicResource Admin_BtnRefreshLogs}" 
                                         Command="{Binding LoadLogsCommand}" 
                                         Style="{StaticResource PrimaryButtonStyle}" 
                                         HorizontalAlignment="Left" Margin="0,0,0,14" Padding="14,8" />
-
+                                
                                 <TabControl Grid.Row="1" Style="{StaticResource BrowserTabControlStyle}" HorizontalAlignment="Stretch">
                                     <TabItem Header="{DynamicResource Admin_CriticalLogs}">
                                         <Border CornerRadius="10" Background="#1E0A0A" Padding="4" Margin="0,8,0,0" HorizontalAlignment="Stretch">

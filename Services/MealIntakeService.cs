@@ -13,53 +13,62 @@ public class MealIntakeService : IMealIntakeService
     private readonly IRestrictionService _restrictionService;
     private readonly ILoggingService _logging;
     private readonly ILocalizationService _loc;
+    private readonly SessionService _session;
 
     public MealIntakeService(
         IDbContextFactory<AppDbContext> dbContextFactory,
         INutritionCalculator calculator,
         IRestrictionService restrictionService,
         ILoggingService logging,
-        ILocalizationService loc)
+        ILocalizationService loc,
+        SessionService session)
     {
         _dbContextFactory = dbContextFactory;
         _calculator = calculator;
         _restrictionService = restrictionService;
         _logging = logging;
         _loc = loc;
+        _session = session;
     }
 
     public async Task AddIntakeItemAsync(Guid userId, Guid? productId, Guid? dishId, decimal amountGrams, CancellationToken cancellationToken = default)
     {
+        EnsureSameUser(userId);
+        if (amountGrams <= 0m)
+            throw new ArgumentOutOfRangeException(nameof(amountGrams), "Amount must be greater than zero.");
+
+        if (productId.HasValue == dishId.HasValue)
+            throw new ArgumentException("Exactly one of productId or dishId must be specified.");
+
         await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
 
-        string itemName = _loc.GetString("Meal_DefaultName");
-        NutritionSnapshot nutrition = new(0m, 0m, 0m, 0m);
+        string itemName;
+        NutritionSnapshot nutrition;
 
         if (productId.HasValue)
         {
-            var product = await db.Products.AsNoTracking().FirstOrDefaultAsync(p => p.Id == productId.Value, cancellationToken);
-            if (product != null)
-            {
-                itemName = product.Name;
-                nutrition = product.CalculateNutritionSnapshot(amountGrams);
-            }
+            var product = await db.Products.AsNoTracking()
+                .FirstOrDefaultAsync(p => p.Id == productId.Value && p.IsActive, cancellationToken)
+                ?? throw new KeyNotFoundException(_loc.GetString("Err_ProductNotFound"));
+
+            itemName = product.Name;
+            nutrition = product.CalculateNutritionSnapshot(amountGrams);
         }
-        else if (dishId.HasValue)
+        else
         {
             var dish = await db.Dishes.AsNoTracking()
                 .Include(d => d.Ingredients)
                     .ThenInclude(i => i.Product)
-                .FirstOrDefaultAsync(d => d.Id == dishId.Value, cancellationToken);
-            if (dish != null)
-            {
-                itemName = dish.Name;
-                var baseNutr = dish.CalculateNutrition();
-                nutrition = new NutritionSnapshot(
-                    baseNutr.Calories * (amountGrams / 100m),
-                    baseNutr.ProteinG * (amountGrams / 100m),
-                    baseNutr.FatG * (amountGrams / 100m),
-                    baseNutr.CarbsG * (amountGrams / 100m));
-            }
+                .FirstOrDefaultAsync(d => d.Id == dishId!.Value && d.IsActive, cancellationToken)
+                ?? throw new KeyNotFoundException(_loc.GetString("Err_DishNotFound"));
+
+            itemName = dish.Name;
+            var baseNutr = dish.CalculateNutrition();
+            nutrition = new NutritionSnapshot(
+                baseNutr.Calories * (amountGrams / 100m),
+                baseNutr.ProteinG * (amountGrams / 100m),
+                baseNutr.FatG * (amountGrams / 100m),
+                baseNutr.CarbsG * (amountGrams / 100m));
         }
 
         var startOfDay = DateTime.UtcNow.Date;
@@ -101,6 +110,7 @@ public class MealIntakeService : IMealIntakeService
 
     public async Task RemoveIntakeItemByFoodAsync(Guid userId, Guid? productId, Guid? dishId, string itemName, CancellationToken cancellationToken = default)
     {
+        EnsureSameUser(userId);
         await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
 
         var startOfDay = DateTime.UtcNow.Date;
@@ -139,6 +149,7 @@ public class MealIntakeService : IMealIntakeService
         IEnumerable<Guid>? excludeIds = null, 
         CancellationToken cancellationToken = default)
     {
+        EnsureSameUser(userId);
         await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
 
         var user = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
@@ -253,6 +264,7 @@ public class MealIntakeService : IMealIntakeService
     
     public async Task SyncPastDaysEatenItemsAsync(Guid userId, CancellationToken cancellationToken = default)
     {
+        EnsureSameUser(userId);
         await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
         
         var today = DateTime.UtcNow.Date;
@@ -338,6 +350,7 @@ public class MealIntakeService : IMealIntakeService
 
     public async Task<List<MealIntakeDisplayDto>> GetTodayIntakesAsync(Guid userId, CancellationToken cancellationToken = default)
     {
+        EnsureSameUser(userId);
         await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
 
         var startOfDay = DateTime.UtcNow.Date;
@@ -374,6 +387,7 @@ public class MealIntakeService : IMealIntakeService
 
     public async Task DeleteIntakeItemByIdAsync(Guid itemId, Guid userId, CancellationToken cancellationToken = default)
     {
+        EnsureSameUser(userId);
         await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
         var item = await db.MealIntakeItems.FirstOrDefaultAsync(i => i.Id == itemId, cancellationToken);
         if (item != null)
@@ -393,6 +407,10 @@ public class MealIntakeService : IMealIntakeService
 
     public async Task UpdateIntakeItemAmountAsync(Guid itemId, decimal newAmountGrams, Guid userId, CancellationToken cancellationToken = default)
     {
+        EnsureSameUser(userId);
+        if (newAmountGrams <= 0m)
+            throw new ArgumentOutOfRangeException(nameof(newAmountGrams), "Amount must be greater than zero.");
+
         await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
         var item = await db.MealIntakeItems.FirstOrDefaultAsync(i => i.Id == itemId, cancellationToken);
         if (item == null) return;
@@ -401,25 +419,28 @@ public class MealIntakeService : IMealIntakeService
 
         if (item.ProductId.HasValue)
         {
-            var product = await db.Products.AsNoTracking().FirstOrDefaultAsync(p => p.Id == item.ProductId.Value, cancellationToken);
-            if (product != null)
-            {
-                nutrition = product.CalculateNutritionSnapshot(newAmountGrams);
-            }
+            var product = await db.Products.AsNoTracking()
+                .FirstOrDefaultAsync(p => p.Id == item.ProductId.Value && p.IsActive, cancellationToken)
+                ?? throw new KeyNotFoundException(_loc.GetString("Err_ProductNotFound"));
+
+            nutrition = product.CalculateNutritionSnapshot(newAmountGrams);
         }
         else if (item.DishId.HasValue)
         {
             var dish = await db.Dishes.AsNoTracking().Include(d => d.Ingredients).ThenInclude(i => i.Product)
-                .FirstOrDefaultAsync(d => d.Id == item.DishId.Value, cancellationToken);
-            if (dish != null)
-            {
-                var baseNutr = dish.CalculateNutrition();
-                nutrition = new NutritionSnapshot(
-                    baseNutr.Calories * (newAmountGrams / 100m),
-                    baseNutr.ProteinG * (newAmountGrams / 100m),
-                    baseNutr.FatG * (newAmountGrams / 100m),
-                    baseNutr.CarbsG * (newAmountGrams / 100m));
-            }
+                .FirstOrDefaultAsync(d => d.Id == item.DishId.Value && d.IsActive, cancellationToken)
+                ?? throw new KeyNotFoundException(_loc.GetString("Err_DishNotFound"));
+
+            var baseNutr = dish.CalculateNutrition();
+            nutrition = new NutritionSnapshot(
+                baseNutr.Calories * (newAmountGrams / 100m),
+                baseNutr.ProteinG * (newAmountGrams / 100m),
+                baseNutr.FatG * (newAmountGrams / 100m),
+                baseNutr.CarbsG * (newAmountGrams / 100m));
+        }
+        else
+        {
+            throw new InvalidOperationException("Meal intake item has no product or dish reference.");
         }
 
         db.Entry(item).Property("Amount").CurrentValue = newAmountGrams;
@@ -437,5 +458,11 @@ public class MealIntakeService : IMealIntakeService
             entityName: nameof(MealIntakeItem),
             entityId: item.Id,
             cancellationToken: cancellationToken);
+    }
+
+    private void EnsureSameUser(Guid userId)
+    {
+        if (!_session.IsAuthenticated || _session.CurrentUser?.Id != userId)
+            throw new UnauthorizedAccessException(_loc.GetString("Err_Unauthorized"));
     }
 }
