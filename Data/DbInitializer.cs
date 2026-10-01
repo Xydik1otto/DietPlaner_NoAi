@@ -19,6 +19,7 @@ public sealed class DbInitializer
     {
         await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
         await db.Database.EnsureCreatedAsync(cancellationToken);
+        await EnsureCatalogSchemaAsync(db, cancellationToken);
 
         await SeedFromJsonSafeAsync(db, cancellationToken);
 
@@ -37,6 +38,82 @@ public sealed class DbInitializer
         }
     }
 
+    private static async Task EnsureCatalogSchemaAsync(AppDbContext db, CancellationToken cancellationToken)
+    {
+        await db.Database.ExecuteSqlRawAsync("PRAGMA foreign_keys = ON;", cancellationToken);
+
+        // The project intentionally uses EnsureCreated instead of EF migrations.
+        // Therefore existing SQLite databases need a small idempotent schema upgrade
+        // when the personal/global catalog model is introduced.
+        if (!await ColumnExistsAsync(db, "Categories", "OwnerUserId", cancellationToken))
+        {
+            await db.Database.ExecuteSqlRawAsync(
+                "ALTER TABLE Categories ADD COLUMN OwnerUserId TEXT NULL;",
+                cancellationToken);
+        }
+
+        if (!await ColumnExistsAsync(db, "Dishes", "OwnerUserId", cancellationToken))
+        {
+            await db.Database.ExecuteSqlRawAsync(
+                "ALTER TABLE Dishes ADD COLUMN OwnerUserId TEXT NULL;",
+                cancellationToken);
+        }
+
+        // The old model required every category name to be globally unique.
+        // Personal categories need their own namespace, while global categories
+        // remain unique among themselves.
+        await db.Database.ExecuteSqlRawAsync("DROP INDEX IF EXISTS IX_Categories_Name;", cancellationToken);
+        await db.Database.ExecuteSqlRawAsync(
+            "CREATE UNIQUE INDEX IF NOT EXISTS IX_Categories_Global_Name ON Categories(Name) WHERE OwnerUserId IS NULL;",
+            cancellationToken);
+        await db.Database.ExecuteSqlRawAsync(
+            "CREATE UNIQUE INDEX IF NOT EXISTS IX_Categories_User_Name ON Categories(OwnerUserId, Name) WHERE OwnerUserId IS NOT NULL;",
+            cancellationToken);
+
+        await db.Database.ExecuteSqlRawAsync(
+            """
+            CREATE TABLE IF NOT EXISTS UserCatalogProducts
+            (
+                UserId TEXT NOT NULL,
+                ProductId TEXT NOT NULL,
+                AddedAtUtc TEXT NOT NULL,
+                CONSTRAINT PK_UserCatalogProducts PRIMARY KEY (UserId, ProductId),
+                CONSTRAINT FK_UserCatalogProducts_Users_UserId
+                    FOREIGN KEY (UserId) REFERENCES Users(Id) ON DELETE CASCADE,
+                CONSTRAINT FK_UserCatalogProducts_Products_ProductId
+                    FOREIGN KEY (ProductId) REFERENCES Products(Id) ON DELETE CASCADE
+            );
+            """,
+            cancellationToken);
+
+        await db.Database.ExecuteSqlRawAsync(
+            "CREATE INDEX IF NOT EXISTS IX_UserCatalogProducts_ProductId ON UserCatalogProducts(ProductId);",
+            cancellationToken);
+    }
+
+    private static async Task<bool> ColumnExistsAsync(
+        AppDbContext db,
+        string tableName,
+        string columnName,
+        CancellationToken cancellationToken)
+    {
+        var connection = db.Database.GetDbConnection();
+        if (connection.State != System.Data.ConnectionState.Open)
+            await connection.OpenAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = $"PRAGMA table_info(\"{tableName}\");";
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            if (string.Equals(reader.GetString(1), columnName, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        return false;
+    }
+
     private static async Task SeedFromJsonSafeAsync(AppDbContext db, CancellationToken cancellationToken)
     {
         var options = new JsonSerializerOptions
@@ -50,7 +127,7 @@ public sealed class DbInitializer
         var dishesDto = await ReadAndDeserializeAsync<List<DishSeedDto>>("dishes.json", options, cancellationToken) ?? new();
 
         // 1. Створення/отримання Категорій
-        var existingCategories = await db.Categories.ToListAsync(cancellationToken);
+        var existingCategories = await db.Categories.Where(c => c.OwnerUserId == null).ToListAsync(cancellationToken);
         var categoryMap = existingCategories.ToDictionary(c => c.Name, StringComparer.OrdinalIgnoreCase);
 
         foreach (var catDto in categoriesDto)
@@ -98,7 +175,7 @@ public sealed class DbInitializer
         await db.SaveChangesAsync(cancellationToken);
 
         // 3. Створення Страв
-        var existingDishes = await db.Dishes.ToListAsync(cancellationToken);
+        var existingDishes = await db.Dishes.Where(d => d.OwnerUserId == null).ToListAsync(cancellationToken);
         var existingDishNames = existingDishes.Select(d => d.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         foreach (var dishDto in dishesDto)

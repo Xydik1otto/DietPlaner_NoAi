@@ -557,6 +557,12 @@ public partial class DashboardViewModel : ViewModelBase
         {
             var cleanName = SelectedSuggestedMeal.Name.Replace("🌐 ", "").Trim();
             var products = await _productService.GetAllAsync();
+            // Suggestions may refer to a program-global product that the user has
+            // not added to the personal catalog yet. Keep the intake flow working
+            // without making global products appear in the personal catalog UI.
+            if (products.Count == 0)
+                products = await _productService.GetGlobalAsync();
+
             var existingProduct = products.FirstOrDefault(p => p.Id == productId.Value || p.Name.Equals(cleanName, StringComparison.OrdinalIgnoreCase));
 
             if (existingProduct == null)

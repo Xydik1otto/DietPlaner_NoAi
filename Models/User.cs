@@ -44,6 +44,7 @@ public sealed class User
     public ICollection<NutritionPlan> Plans { get; private set; } = new List<NutritionPlan>();
     public ICollection<PlanHistory> PlanHistory { get; private set; } = new List<PlanHistory>();
     public ICollection<ActionRecord> ActionRecords { get; private set; } = new List<ActionRecord>();
+    public ICollection<UserCatalogProduct> CatalogProducts { get; private set; } = new List<UserCatalogProduct>();
 
     public void SetEmail(string email)
     {

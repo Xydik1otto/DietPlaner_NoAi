@@ -66,6 +66,15 @@ public partial class PlanGeneratorViewModel : ViewModelBase
         LoadUserProfileAndTargets();
     }
 
+    partial void OnMealCountChanged(int value)
+    {
+        var normalized = Math.Clamp(value, 1, 8);
+        if (value != normalized)
+        {
+            MealCount = normalized;
+        }
+    }
+
     public void LoadUserProfileAndTargets()
     {
         var user = _authService.CurrentUser;
@@ -226,7 +235,7 @@ public partial class PlanGeneratorViewModel : ViewModelBase
             });
         }
 
-        var products = await _productService.GetAllAsync(cancellationToken: cancellationToken);
+        var products = await _productService.GetGlobalAsync(cancellationToken: cancellationToken);
         foreach (var p in products)
         {
             items.Add(new FoodItemDisplayDto

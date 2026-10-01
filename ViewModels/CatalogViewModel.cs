@@ -21,6 +21,7 @@ public partial class CatalogViewModel : ViewModelBase
     private readonly IDishService _dishService;
     private readonly ICategoryService _categoryService;
     private readonly ISortService _sortService;
+    private readonly ISearchService _searchService;
     private readonly IUndoService _undoService;
     private readonly IAuthenticationService _authService;
     private readonly ILoggingService _loggingService;
@@ -28,6 +29,7 @@ public partial class CatalogViewModel : ViewModelBase
     private readonly ILocalizationService _loc;
 
     private Category _allCategoriesOption;
+    private IReadOnlyList<Product> _allGlobalCatalogProducts = Array.Empty<Product>();
 
     [ObservableProperty] private ObservableCollection<Category> _filterCategories = new();
     [ObservableProperty] private string _searchQuery = string.Empty;
@@ -37,8 +39,15 @@ public partial class CatalogViewModel : ViewModelBase
     [ObservableProperty] private string _statusMessage = string.Empty;
 
     [ObservableProperty] private ObservableCollection<Category> _categories = new();
+    [ObservableProperty] private ObservableCollection<Category> _globalCategories = new();
     [ObservableProperty] private ObservableCollection<FoodItemDisplayDto> _filteredItems = new();
     [ObservableProperty] private FoodItemDisplayDto? _selectedItem;
+
+    // The main catalog is personal for User and global for Admin.
+    [ObservableProperty] private bool _isGlobalCatalogDialogOpen;
+    [ObservableProperty] private string _globalCatalogSearchQuery = string.Empty;
+    [ObservableProperty] private ObservableCollection<Product> _globalCatalogProducts = new();
+    [ObservableProperty] private Product? _selectedGlobalCatalogProduct;
 
     // API Search Dialog
     [ObservableProperty] private bool _isApiSearchDialogOpen;
@@ -87,12 +96,18 @@ public partial class CatalogViewModel : ViewModelBase
 
     public NutritionBasis[] NutritionBases => Enum.GetValues<NutritionBasis>();
     public ObservableCollection<string> SortOptions { get; private set; } = new();
+    public bool IsAdmin => _authService.CurrentUser?.Role == UserRole.Admin;
+    public bool IsUser => _authService.CurrentUser?.Role == UserRole.User;
+    public string CatalogScopeTitle => IsAdmin
+        ? _loc.GetString("Cat_GlobalCatalogTitle")
+        : _loc.GetString("Cat_PersonalCatalogTitle");
 
     public CatalogViewModel(
         IProductService productService,
         IDishService dishService,
         ICategoryService categoryService,
         ISortService sortService,
+        ISearchService searchService,
         IUndoService undoService,
         IAuthenticationService authService,
         ILoggingService loggingService,
@@ -103,6 +118,7 @@ public partial class CatalogViewModel : ViewModelBase
         _dishService = dishService;
         _categoryService = categoryService;
         _sortService = sortService;
+        _searchService = searchService;
         _undoService = undoService;
         _authService = authService;
         _loggingService = loggingService;
@@ -116,6 +132,7 @@ public partial class CatalogViewModel : ViewModelBase
         {
             _allCategoriesOption = new Category(_loc.GetString("Cat_AllCategories"), string.Empty);
             InitializeSortOptions();
+            OnPropertyChanged(nameof(CatalogScopeTitle));
             _ = LoadDataAsync();
         };
     }
@@ -222,7 +239,10 @@ public partial class CatalogViewModel : ViewModelBase
     public async Task LoadDataAsync(CancellationToken cancellationToken = default)
     {
         var cats = await _categoryService.GetAllAsync(cancellationToken: cancellationToken);
+        var globalCats = await _categoryService.GetGlobalAsync(cancellationToken: cancellationToken);
+
         Categories = new ObservableCollection<Category>(cats);
+        GlobalCategories = new ObservableCollection<Category>(globalCats);
 
         var filterList = new List<Category> { _allCategoriesOption };
         filterList.AddRange(cats);
@@ -237,21 +257,31 @@ public partial class CatalogViewModel : ViewModelBase
     {
         try
         {
-            var allProducts = await _productService.GetAllAsync(cancellationToken: cancellationToken);
-            var productsQuery = allProducts.AsEnumerable();
+            IReadOnlyList<Product> products;
+            var hasSearchQuery = !string.IsNullOrWhiteSpace(SearchQuery);
+            var categoryId = SelectedCategory != null &&
+                             SelectedCategory != _allCategoriesOption &&
+                             SelectedCategory.Id != Guid.Empty
+                ? SelectedCategory.Id
+                : (Guid?)null;
 
-            if (SelectedCategory != null && SelectedCategory != _allCategoriesOption && SelectedCategory.Id != Guid.Empty)
+            if (hasSearchQuery)
             {
-                productsQuery = productsQuery.Where(p => p.CategoryId == SelectedCategory.Id);
+                var searchResults = await _searchService.SearchProductsAsync(
+                    SearchQuery.Trim(),
+                    categoryId: categoryId,
+                    cancellationToken: cancellationToken);
+                products = searchResults.Select(x => x.Product).ToList();
+            }
+            else
+            {
+                var allProducts = await _productService.GetAllAsync(cancellationToken: cancellationToken);
+                products = categoryId.HasValue
+                    ? allProducts.Where(p => p.CategoryId == categoryId.Value).ToList()
+                    : allProducts;
             }
 
-            if (!string.IsNullOrWhiteSpace(SearchQuery))
-            {
-                var query = SearchQuery.Trim();
-                productsQuery = productsQuery.Where(p => p.Name.Contains(query, StringComparison.OrdinalIgnoreCase));
-            }
-
-            var dtos = productsQuery.Select(p => new FoodItemDisplayDto
+            var dtos = products.Select(p => new FoodItemDisplayDto
             {
                 Id = p.Id,
                 Name = p.Name,
@@ -265,23 +295,24 @@ public partial class CatalogViewModel : ViewModelBase
 
             if (IncludeDishes)
             {
-                var allDishes = await _dishService.GetAllAsync(cancellationToken: cancellationToken);
-                var dishesQuery = allDishes.AsEnumerable();
-
-                if (SelectedCategory != null && SelectedCategory != _allCategoriesOption && SelectedCategory.Id != Guid.Empty)
-                {
-                    dishesQuery = dishesQuery.Where(d => d.CategoryId == SelectedCategory.Id);
-                }
-
+                IReadOnlyList<Dish> dishes;
                 if (!string.IsNullOrWhiteSpace(SearchQuery))
                 {
-                    var query = SearchQuery.Trim();
-                    dishesQuery = dishesQuery.Where(d => 
-                        d.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ||
-                        d.Ingredients.Any(i => i.Product != null && i.Product.Name.Contains(query, StringComparison.OrdinalIgnoreCase)));
+                    var dishSearchResults = await _searchService.SearchDishesAsync(
+                        SearchQuery.Trim(),
+                        categoryId: categoryId,
+                        cancellationToken: cancellationToken);
+                    dishes = dishSearchResults.Select(x => x.Dish).ToList();
+                }
+                else
+                {
+                    var allDishes = await _dishService.GetAllAsync(cancellationToken: cancellationToken);
+                    dishes = categoryId.HasValue
+                        ? allDishes.Where(d => d.CategoryId == categoryId.Value).ToList()
+                        : allDishes;
                 }
 
-                foreach (var d in dishesQuery)
+                foreach (var d in dishes)
                 {
                     var nutrition = d.CalculateNutrition();
                     dtos.Add(new FoodItemDisplayDto
@@ -310,6 +341,94 @@ public partial class CatalogViewModel : ViewModelBase
                 dtos = dtos.OrderBy(x => x.Name).ToList();
 
             FilteredItems = new ObservableCollection<FoodItemDisplayDto>(dtos);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = ex.Message;
+        }
+    }
+
+    [RelayCommand]
+    private async Task OpenGlobalCatalogDialogAsync(CancellationToken cancellationToken = default)
+    {
+        GlobalCatalogSearchQuery = string.Empty;
+        SelectedGlobalCatalogProduct = null;
+        try
+        {
+            _allGlobalCatalogProducts = await _productService.GetGlobalAsync(cancellationToken: cancellationToken);
+            GlobalCatalogProducts = new ObservableCollection<Product>(_allGlobalCatalogProducts);
+            IsGlobalCatalogDialogOpen = true;
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = ex.Message;
+        }
+    }
+
+    [RelayCommand]
+    private void CloseGlobalCatalogDialog() => IsGlobalCatalogDialogOpen = false;
+
+    partial void OnGlobalCatalogSearchQueryChanged(string value)
+    {
+        _ = FilterGlobalCatalogAsync(value);
+    }
+
+    private async Task FilterGlobalCatalogAsync(string value)
+    {
+        if (!IsGlobalCatalogDialogOpen)
+            return;
+
+        try
+        {
+            var query = value?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                GlobalCatalogProducts = new ObservableCollection<Product>(_allGlobalCatalogProducts);
+                return;
+            }
+
+            var searchResults = await _searchService.SearchGlobalProductsAsync(
+                query,
+                cancellationToken: CancellationToken.None);
+            GlobalCatalogProducts = new ObservableCollection<Product>(searchResults.Select(x => x.Product));
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = ex.Message;
+        }
+    }
+
+    [RelayCommand]
+    private async Task AddSelectedGlobalProductToPersonalCatalogAsync(CancellationToken cancellationToken = default)
+    {
+        if (!IsUser || SelectedGlobalCatalogProduct == null)
+            return;
+
+        try
+        {
+            await _productService.AddToPersonalCatalogAsync(SelectedGlobalCatalogProduct.Id, cancellationToken: cancellationToken);
+            StatusMessage = _loc.GetString("Cat_ProductAddedToPersonal");
+            SelectedGlobalCatalogProduct = null;
+            await LoadDataAsync(cancellationToken);
+            await FilterGlobalCatalogAsync(GlobalCatalogSearchQuery);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = ex.Message;
+        }
+    }
+
+    [RelayCommand]
+    private async Task DeleteSelectedCategoryAsync(CancellationToken cancellationToken = default)
+    {
+        if (SelectedCategory == null || SelectedCategory == _allCategoriesOption || SelectedCategory.Id == Guid.Empty)
+            return;
+
+        try
+        {
+            await _categoryService.DeleteAsync(SelectedCategory.Id, cancellationToken);
+            SelectedCategory = _allCategoriesOption;
+            await LoadDataAsync(cancellationToken);
         }
         catch (Exception ex)
         {
@@ -351,7 +470,7 @@ public partial class CatalogViewModel : ViewModelBase
         IsEditingProduct = false;
         EditingProductId = null;
         ProductName = string.Empty;
-        ProductSelectedCategory = Categories.FirstOrDefault();
+        ProductSelectedCategory = GlobalCategories.FirstOrDefault();
         ProductDescription = string.Empty;
         ProductBasis = NutritionBasis.Per100Grams;
         ProductReferenceAmount = "100";
@@ -377,7 +496,7 @@ public partial class CatalogViewModel : ViewModelBase
         IsEditingProduct = true;
         EditingProductId = product.Id;
         ProductName = product.Name;
-        ProductSelectedCategory = Categories.FirstOrDefault(c => c.Id == product.CategoryId);
+        ProductSelectedCategory = GlobalCategories.FirstOrDefault(c => c.Id == product.CategoryId);
         ProductDescription = product.Description ?? string.Empty;
         ProductBasis = product.Basis;
         ProductReferenceAmount = product.ReferenceAmount.ToString("0.##");

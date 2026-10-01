@@ -55,7 +55,7 @@ public class AppStartupService : IAppStartupService
             "Загальне"
         };
 
-        var existingCategories = await db.Categories.ToListAsync(cancellationToken);
+        var existingCategories = await db.Categories.Where(c => c.OwnerUserId == null).ToListAsync(cancellationToken);
         var categoryMap = existingCategories.ToDictionary(c => c.Name, StringComparer.OrdinalIgnoreCase);
 
         foreach (var name in defaultCategoryNames)

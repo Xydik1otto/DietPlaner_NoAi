@@ -8,17 +8,21 @@ public sealed class Category
     {
     }
 
-    public Category(string name, string? description = null)
+    public Category(string name, string? description = null, Guid? ownerUserId = null)
     {
         Id = Guid.NewGuid();
         SetName(name);
         SetDescription(description);
+        OwnerUserId = ownerUserId;
         IsActive = true;
         CreatedAtUtc = DateTime.UtcNow;
         UpdatedAtUtc = CreatedAtUtc;
     }
 
     public Guid Id { get; private set; }
+    public Guid? OwnerUserId { get; private set; }
+    public User? OwnerUser { get; private set; }
+    public bool IsGlobal => OwnerUserId is null;
     public string Name => _name;
     public string? Description { get; private set; }
     public bool IsActive { get; private set; }

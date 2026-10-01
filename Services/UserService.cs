@@ -10,12 +10,18 @@ public sealed class UserService : IUserService
     private readonly IDbContextFactory<AppDbContext> _dbFactory;
     private readonly ILoggingService _logging;
     private readonly ILocalizationService _loc;
+    private readonly SessionService _session;
 
-    public UserService(IDbContextFactory<AppDbContext> dbFactory, ILoggingService logging, ILocalizationService loc)
+    public UserService(
+        IDbContextFactory<AppDbContext> dbFactory,
+        ILoggingService logging,
+        ILocalizationService loc,
+        SessionService session)
     {
         _dbFactory = dbFactory;
         _logging = logging;
         _loc = loc;
+        _session = session;
     }
 
     public async Task<(bool Success, string Message, User? User)> RegisterAsync(string email, string displayName, string password, CancellationToken cancellationToken = default)
@@ -99,6 +105,21 @@ public sealed class UserService : IUserService
         var user = await db.Users.SingleOrDefaultAsync(x => x.Id == userId, cancellationToken)
             ?? throw new KeyNotFoundException(_loc.GetString("Err_UserNotFound"));
 
+        // Personal catalog entities must be removed before the user itself because
+        // Category -> Dish uses Restrict to protect catalog data from accidental deletes.
+        var personalDishes = await db.Dishes
+            .Where(x => x.OwnerUserId == userId)
+            .Include(x => x.Ingredients)
+            .ToListAsync(cancellationToken);
+        if (personalDishes.Count > 0)
+            db.Dishes.RemoveRange(personalDishes);
+
+        var personalCategories = await db.Categories
+            .Where(x => x.OwnerUserId == userId)
+            .ToListAsync(cancellationToken);
+        if (personalCategories.Count > 0)
+            db.Categories.RemoveRange(personalCategories);
+
         db.Users.Remove(user);
         await db.SaveChangesAsync(cancellationToken);
         await _logging.LogActionAsync(userId, ActionType.Delete, "Deleted user profile", "User", userId, cancellationToken: cancellationToken);
@@ -113,12 +134,27 @@ public sealed class UserService : IUserService
 
     public async Task ChangeRoleAsync(Guid userId, UserRole newRole, CancellationToken cancellationToken = default)
     {
+        EnsureAdmin();
+
         await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
         var user = await db.Users.SingleOrDefaultAsync(x => x.Id == userId, cancellationToken)
             ?? throw new KeyNotFoundException(_loc.GetString("Err_UserNotFound"));
 
         user.SetRole(newRole);
         await db.SaveChangesAsync(cancellationToken);
-        await _logging.LogActionAsync(userId, ActionType.Update, $"Changed user role to {newRole}", "User", userId, cancellationToken: cancellationToken);
+
+        await _logging.LogActionAsync(
+            _session.CurrentUser!.Id,
+            ActionType.Update,
+            $"Changed user role to {newRole}",
+            "User",
+            userId,
+            cancellationToken: cancellationToken);
+    }
+
+    private void EnsureAdmin()
+    {
+        if (!_session.IsAuthenticated || _session.CurrentUser?.Role != UserRole.Admin)
+            throw new UnauthorizedAccessException(_loc.GetString("Err_Unauthorized"));
     }
 }

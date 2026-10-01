@@ -145,6 +145,15 @@
     <sys:String x:Key="Dash_ErrSave">Помилка збереження: {0}</sys:String>
 
     <!-- Каталог (Catalog) -->
+    <sys:String x:Key="Cat_PersonalCatalogTitle">Мій каталог</sys:String>
+    <sys:String x:Key="Cat_GlobalCatalogTitle">Каталог програми</sys:String>
+    <sys:String x:Key="Cat_AddFromProgramCatalog">Додати з каталогу програми</sys:String>
+    <sys:String x:Key="Cat_DeleteCategory">Видалити категорію</sys:String>
+    <sys:String x:Key="Cat_GlobalCatalogDialogTitle">Каталог програми: додавання до мого каталогу</sys:String>
+    <sys:String x:Key="Cat_GlobalCatalogSearch">Пошук у каталозі програми</sys:String>
+    <sys:String x:Key="Cat_AddToPersonal">Додати до мого каталогу</sys:String>
+    <sys:String x:Key="Cat_ProductAddedToPersonal">Продукт додано до вашого каталогу.</sys:String>
+    <sys:String x:Key="Err_GlobalCategoryRequired">Продукт програми повинен використовувати загальну категорію.</sys:String>
     <sys:String x:Key="Cat_Title">📚 Каталог продуктів та страв</sys:String>
     <sys:String x:Key="Cat_BtnApi">🌐 Пошук в API</sys:String>
     <sys:String x:Key="Cat_BtnCategory">+ Категорія</sys:String>
@@ -221,6 +230,7 @@
     <sys:String x:Key="Prof_Goal">Ціль харчування:</sys:String>
     <sys:String x:Key="Prof_Restrictions">Дієтичні обмеження та алергени</sys:String>
     <sys:String x:Key="Prof_RestrictionsDesc">Познач обмеження, які мають враховуватися під час формування раціону.</sys:String>
+    <sys:String x:Key="Prof_VerificationSent">Код підтвердження надіслано на вказану електронну адресу.</sys:String>
     <sys:String x:Key="Prof_SaveProfile">Зберегти профіль та обмеження</sys:String>
 
     <!-- Переліки (Enums) -->
@@ -236,6 +246,11 @@
     <sys:String x:Key="Activity_VeryHigh">Екстремальні навантаження</sys:String>
 
     <!-- Розширена Адмін-панель -->
+    <sys:String x:Key="Admin_Title">⚙️ Адміністрування</sys:String>
+    <sys:String x:Key="Admin_Role">Роль</sys:String>
+    <sys:String x:Key="Admin_RegDate">Дата реєстрації</sys:String>
+    <sys:String x:Key="Admin_ChangeRole">Змінити роль</sys:String>
+    <sys:String x:Key="Admin_AccessDenied">Доступ до адмін-панелі заборонено.</sys:String>
     <sys:String x:Key="Admin_TabStats">📊 Статистика</sys:String>
     <sys:String x:Key="Admin_TabUsers">👥 Користувачі</sys:String>
     <sys:String x:Key="Admin_TabLogs">🪵 Логи системи</sys:String>
@@ -315,6 +330,7 @@
 
     <sys:String x:Key="Err_CategoryNotFound">Категорію не знайдено або вона неактивна.</sys:String>
     <sys:String x:Key="Err_CategoryExists">Категорія з такою назвою вже існує.</sys:String>
+    <sys:String x:Key="Err_ProductNotInPersonalCatalog">Усі продукти страви користувача мають бути додані до його особистого каталогу.</sys:String>
     <sys:String x:Key="Err_ProductNotFound">Продукт не знайдено.</sys:String>
     <sys:String x:Key="Err_DishNotFound">Страву не знайдено.</sys:String>
     <sys:String x:Key="Err_UserNotFound">Користувача не знайдено.</sys:String>
@@ -346,6 +362,9 @@
     <sys:String x:Key="Meal_Snack">Полуденок</sys:String>
     <sys:String x:Key="Meal_SecondBreakfast">Другий сніданок</sys:String>
     <sys:String x:Key="Meal_LateDinner">Пізня вечеря</sys:String>
+    <sys:String x:Key="Meal_Single">Основний прийом їжі</sys:String>
+    <sys:String x:Key="Meal_Snack2">Другий перекус</sys:String>
+    <sys:String x:Key="Meal_Snack3">Третій перекус</sys:String>
         
     <!-- Повідомлення користувачів та обмежень -->
     <sys:String x:Key="User_AlreadyExists">Користувач із таким email уже існує.</sys:String>

@@ -42,7 +42,6 @@ public partial class MainWindowViewModel : ViewModelBase
         INavigationService navigation, 
         IAuthenticationService auth,
         ILocalizationService loc,
-        IUserService userService,
         IAppPaths paths)
     {
         _session = session;
@@ -55,22 +54,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _session.StateChanged += (s, e) => { RefreshState(); CheckAlerts(); };
         _loc.CultureChanged += (s, e) => OnPropertyChanged(nameof(CurrentLanguageName));
 
-        _ = GrantAdminRoleAsync(userService, "example@example.com");
         CheckAlerts();
-    }
-
-    private async Task GrantAdminRoleAsync(IUserService userService, string email)
-    {
-        try
-        {
-            var user = await userService.FindByEmailAsync(email);
-            if (user != null && user.Role != UserRole.Admin)
-            {
-                await userService.ChangeRoleAsync(user.Id, UserRole.Admin);
-                RefreshState();
-            }
-        }
-        catch { }
     }
 
     public void CheckAlerts()

@@ -28,6 +28,7 @@ public sealed partial class AdminViewModel : ViewModelBase
     private readonly INavigationService _navigationService;
     private readonly IAppPaths _paths;
     private readonly ILocalizationService _loc;
+    private readonly IStatisticsService _statisticsService;
 
     [ObservableProperty] private ObservableCollection<UserDisplayDto> _users = new();
     [ObservableProperty] private string _criticalLogsContent = string.Empty;
@@ -47,13 +48,15 @@ public sealed partial class AdminViewModel : ViewModelBase
         IAuthorizationService authService,
         INavigationService navigationService,
         IAppPaths paths,
-        ILocalizationService loc)
+        ILocalizationService loc,
+        IStatisticsService statisticsService)
     {
         _userService = userService;
         _authService = authService;
         _navigationService = navigationService;
         _paths = paths;
         _loc = loc;
+        _statisticsService = statisticsService;
     }
 
     public async Task InitializeAsync()
@@ -142,9 +145,10 @@ public sealed partial class AdminViewModel : ViewModelBase
                     CreatedAt = u.CreatedAtUtc.ToLocalTime()
                 }));
 
-            TotalUsersCount = usersArray.Count;
-            ActiveUsersCount = usersArray.Count;
-            TotalPlansCount = usersArray.Count * 3;
+            var adminStats = await _statisticsService.GetAdminStatisticsAsync();
+            TotalUsersCount = adminStats.TotalUsers;
+            ActiveUsersCount = adminStats.UsersWithLogin;
+            TotalPlansCount = adminStats.TotalPlans;
         }
         catch (Exception ex)
         {

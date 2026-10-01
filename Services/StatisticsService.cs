@@ -1,4 +1,5 @@
 using DietPlanner.Data;
+using DietPlanner.Models;
 using DietPlanner.Services.Contracts;
 using DietPlanner.ViewModels;
 using Microsoft.EntityFrameworkCore;
@@ -9,11 +10,16 @@ public class StatisticsService : IStatisticsService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory;
     private readonly ILocalizationService _loc;
+    private readonly SessionService _session;
 
-    public StatisticsService(IDbContextFactory<AppDbContext> dbFactory, ILocalizationService loc)
+    public StatisticsService(
+        IDbContextFactory<AppDbContext> dbFactory,
+        ILocalizationService loc,
+        SessionService session)
     {
         _dbFactory = dbFactory;
         _loc = loc;
+        _session = session;
     }
 
     public async Task<List<DailyStatItem>> GetDailyStatsAsync(Guid userId, DateTime date)
@@ -84,4 +90,18 @@ public class StatisticsService : IStatisticsService
         DateTime end = new DateTime(year, month, DateTime.DaysInMonth(year, month));
         return await GetWeeklyStatsAsync(userId, start, end);
     }
+    public async Task<AdminStatisticsSnapshot> GetAdminStatisticsAsync(CancellationToken cancellationToken = default)
+    {
+        if (!_session.IsAuthenticated || _session.CurrentUser?.Role != UserRole.Admin)
+            throw new UnauthorizedAccessException(_loc.GetString("Err_Unauthorized"));
+
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+
+        var totalUsers = await db.Users.CountAsync(cancellationToken);
+        var usersWithLogin = await db.Users.CountAsync(x => x.LastLoginAtUtc.HasValue, cancellationToken);
+        var totalPlans = await db.NutritionPlans.CountAsync(cancellationToken);
+
+        return new AdminStatisticsSnapshot(totalUsers, usersWithLogin, totalPlans);
+    }
+
 }

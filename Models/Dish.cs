@@ -8,18 +8,22 @@ public sealed class Dish
     {
     }
 
-    public Dish(string name, Guid categoryId, string? description = null)
+    public Dish(string name, Guid categoryId, string? description = null, Guid? ownerUserId = null)
     {
         Id = Guid.NewGuid();
         SetName(name);
         CategoryId = categoryId;
         SetDescription(description);
+        OwnerUserId = ownerUserId;
         IsActive = true;
         CreatedAtUtc = DateTime.UtcNow;
         UpdatedAtUtc = CreatedAtUtc;
     }
 
     public Guid Id { get; private set; }
+    public Guid? OwnerUserId { get; private set; }
+    public User? OwnerUser { get; private set; }
+    public bool IsGlobal => OwnerUserId is null;
     public string Name => _name;
     public Guid CategoryId { get; private set; }
     public Category? Category { get; private set; }

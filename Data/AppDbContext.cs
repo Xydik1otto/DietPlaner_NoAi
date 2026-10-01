@@ -1,7 +1,5 @@
 using DietPlanner.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
-using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace DietPlanner.Data;
 
@@ -17,6 +15,7 @@ public sealed class AppDbContext : DbContext
     public DbSet<Product> Products => Set<Product>();
     public DbSet<Dish> Dishes => Set<Dish>();
     public DbSet<DishIngredient> DishIngredients => Set<DishIngredient>();
+    public DbSet<UserCatalogProduct> UserCatalogProducts => Set<UserCatalogProduct>();
     public DbSet<DietaryRestriction> DietaryRestrictions => Set<DietaryRestriction>();
     public DbSet<UserRestriction> UserRestrictions => Set<UserRestriction>();
     public DbSet<MealIntake> MealIntakes => Set<MealIntake>();
@@ -32,6 +31,7 @@ public sealed class AppDbContext : DbContext
         ConfigureCategories(modelBuilder);
         ConfigureProducts(modelBuilder);
         ConfigureDishes(modelBuilder);
+        ConfigureUserCatalogProducts(modelBuilder);
         ConfigureRestrictions(modelBuilder);
         ConfigureMealIntakes(modelBuilder);
         ConfigurePlans(modelBuilder);
@@ -59,7 +59,18 @@ public sealed class AppDbContext : DbContext
         var entity = modelBuilder.Entity<Category>();
         entity.HasKey(x => x.Id);
         entity.Property(x => x.Name).HasField("_name").HasMaxLength(120).IsRequired();
-        entity.HasIndex(x => x.Name).IsUnique();
+        entity.Property(x => x.OwnerUserId);
+        entity.HasIndex(x => x.OwnerUserId);
+        entity.HasIndex(x => x.Name)
+            .IsUnique()
+            .HasFilter("OwnerUserId IS NULL");
+        entity.HasIndex(x => new { x.OwnerUserId, x.Name })
+            .IsUnique()
+            .HasFilter("OwnerUserId IS NOT NULL");
+        entity.HasOne(x => x.OwnerUser)
+            .WithMany()
+            .HasForeignKey(x => x.OwnerUserId)
+            .OnDelete(DeleteBehavior.Cascade);
         entity.Property(x => x.Description).HasMaxLength(500);
     }
 
@@ -78,6 +89,7 @@ public sealed class AppDbContext : DbContext
         entity.Property(x => x.CarbsG).HasPrecision(12, 3).IsRequired();
         entity.Property(x => x.AllergensJson).IsRequired();
         entity.Property(x => x.DietaryTagsJson).IsRequired();
+        entity.Property(x => x.IsGlobal).IsRequired();
         entity.HasOne(x => x.Category).WithMany(x => x.Products).HasForeignKey(x => x.CategoryId).OnDelete(DeleteBehavior.Restrict);
     }
 
@@ -88,6 +100,12 @@ public sealed class AppDbContext : DbContext
         entity.Property(x => x.Name).HasField("_name").HasMaxLength(160).IsRequired();
         entity.HasIndex(x => x.Name);
         entity.Property(x => x.Description).HasMaxLength(1000);
+        entity.Property(x => x.OwnerUserId);
+        entity.HasIndex(x => x.OwnerUserId);
+        entity.HasOne(x => x.OwnerUser)
+            .WithMany()
+            .HasForeignKey(x => x.OwnerUserId)
+            .OnDelete(DeleteBehavior.Cascade);
         entity.HasOne(x => x.Category).WithMany(x => x.Dishes).HasForeignKey(x => x.CategoryId).OnDelete(DeleteBehavior.Restrict);
 
         var ingredient = modelBuilder.Entity<DishIngredient>();
@@ -97,6 +115,21 @@ public sealed class AppDbContext : DbContext
         ingredient.HasIndex(x => new { x.DishId, x.ProductId }).IsUnique();
         ingredient.HasOne(x => x.Dish).WithMany(x => x.Ingredients).HasForeignKey(x => x.DishId).OnDelete(DeleteBehavior.Cascade);
         ingredient.HasOne(x => x.Product).WithMany(x => x.DishIngredients).HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.Restrict);
+    }
+
+    private static void ConfigureUserCatalogProducts(ModelBuilder modelBuilder)
+    {
+        var entity = modelBuilder.Entity<UserCatalogProduct>();
+        entity.HasKey(x => new { x.UserId, x.ProductId });
+        entity.Property(x => x.AddedAtUtc).IsRequired();
+        entity.HasOne(x => x.User)
+            .WithMany(x => x.CatalogProducts)
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        entity.HasOne(x => x.Product)
+            .WithMany(x => x.UserCatalogItems)
+            .HasForeignKey(x => x.ProductId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 
     private static void ConfigureRestrictions(ModelBuilder modelBuilder)

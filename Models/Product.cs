@@ -57,6 +57,7 @@ public sealed class Product
     public DateTime UpdatedAtUtc { get; private set; }
 
     public ICollection<DishIngredient> DishIngredients { get; private set; } = new List<DishIngredient>();
+    public ICollection<UserCatalogProduct> UserCatalogItems { get; private set; } = new List<UserCatalogProduct>();
 
     public void SetName(string name)
     {

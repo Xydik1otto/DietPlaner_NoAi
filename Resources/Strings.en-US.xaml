@@ -13,6 +13,7 @@
     <sys:String x:Key="Nav_UndoHistory">↺ Action History</sys:String>
     <sys:String x:Key="Nav_Statistics">📈 Statistics</sys:String>
     <sys:String x:Key="Nav_Logout">🚪 Log Out</sys:String>
+    <sys:String x:Key="Nav_AdminPanel">⚙️ Admin Panel</sys:String>
     <sys:String x:Key="Nav_Language">Interface Language:</sys:String>
 
     <!-- Common Buttons -->
@@ -144,6 +145,15 @@
     <sys:String x:Key="Dash_ErrSave">Save error: {0}</sys:String>
 
     <!-- Catalog -->
+    <sys:String x:Key="Cat_PersonalCatalogTitle">My Catalog</sys:String>
+    <sys:String x:Key="Cat_GlobalCatalogTitle">Program Catalog</sys:String>
+    <sys:String x:Key="Cat_AddFromProgramCatalog">Add from Program Catalog</sys:String>
+    <sys:String x:Key="Cat_DeleteCategory">Delete Category</sys:String>
+    <sys:String x:Key="Cat_GlobalCatalogDialogTitle">Program Catalog: Add to My Catalog</sys:String>
+    <sys:String x:Key="Cat_GlobalCatalogSearch">Search Program Catalog</sys:String>
+    <sys:String x:Key="Cat_AddToPersonal">Add to My Catalog</sys:String>
+    <sys:String x:Key="Cat_ProductAddedToPersonal">Product added to your catalog.</sys:String>
+    <sys:String x:Key="Err_GlobalCategoryRequired">A program product must use a global category.</sys:String>
     <sys:String x:Key="Cat_Title">📚 Products &amp; Dishes Catalog</sys:String>
     <sys:String x:Key="Cat_BtnApi">🌐 Search API</sys:String>
     <sys:String x:Key="Cat_BtnCategory">+ Category</sys:String>
@@ -220,6 +230,7 @@
     <sys:String x:Key="Prof_Goal">Nutrition Goal:</sys:String>
     <sys:String x:Key="Prof_Restrictions">Dietary Restrictions &amp; Allergens</sys:String>
     <sys:String x:Key="Prof_RestrictionsDesc">Check restrictions to consider during menu generation.</sys:String>
+    <sys:String x:Key="Prof_VerificationSent">The verification code was sent to the specified email address.</sys:String>
     <sys:String x:Key="Prof_SaveProfile">Save Profile &amp; Restrictions</sys:String>
 
     <!-- Enums -->
@@ -235,6 +246,11 @@
     <sys:String x:Key="Activity_VeryHigh">Extreme Training</sys:String>
 
     <!-- Extended Admin Panel -->
+    <sys:String x:Key="Admin_Title">⚙️ Administration</sys:String>
+    <sys:String x:Key="Admin_Role">Role</sys:String>
+    <sys:String x:Key="Admin_RegDate">Registration date</sys:String>
+    <sys:String x:Key="Admin_ChangeRole">Change role</sys:String>
+    <sys:String x:Key="Admin_AccessDenied">Access to the admin panel is denied.</sys:String>
     <sys:String x:Key="Admin_TabStats">📊 Statistics</sys:String>
     <sys:String x:Key="Admin_TabUsers">👥 User Management</sys:String>
     <sys:String x:Key="Admin_TabLogs">🪵 System Logs</sys:String>
@@ -314,6 +330,7 @@
 
     <sys:String x:Key="Err_CategoryNotFound">Category not found or inactive.</sys:String>
     <sys:String x:Key="Err_CategoryExists">A category with this name already exists.</sys:String>
+    <sys:String x:Key="Err_ProductNotInPersonalCatalog">All products in a user dish must be added to the user personal catalog.</sys:String>
     <sys:String x:Key="Err_ProductNotFound">Product not found.</sys:String>
     <sys:String x:Key="Err_DishNotFound">Dish not found.</sys:String>
     <sys:String x:Key="Err_UserNotFound">User not found.</sys:String>
@@ -345,6 +362,9 @@
     <sys:String x:Key="Meal_Snack">Snack</sys:String>
     <sys:String x:Key="Meal_SecondBreakfast">Second Breakfast</sys:String>
     <sys:String x:Key="Meal_LateDinner">Late Dinner</sys:String>
+    <sys:String x:Key="Meal_Single">Main Meal</sys:String>
+    <sys:String x:Key="Meal_Snack2">Second Snack</sys:String>
+    <sys:String x:Key="Meal_Snack3">Third Snack</sys:String>
 
     <!-- User & Restriction Messages -->
     <sys:String x:Key="User_AlreadyExists">A user with this email already exists.</sys:String>

@@ -11,14 +11,19 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Text="{DynamicResource Cat_Title}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,16"/>
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock Text="{DynamicResource Cat_Title}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+            <TextBlock Text="{Binding CatalogScopeTitle}" FontSize="13" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
+        </StackPanel>
 
         <WrapPanel Grid.Row="1" Margin="0,0,0,12">
             <Button Content="{DynamicResource Cat_BtnApi}" Command="{Binding OpenApiSearchDialogCommand}" Background="#7C3AED" Foreground="White" Margin="0,0,8,8"/>
+            <Button Content="{DynamicResource Cat_AddFromProgramCatalog}" Command="{Binding OpenGlobalCatalogDialogCommand}" Visibility="{Binding IsUser, Converter={StaticResource BoolToVisibilityConverter}}" Background="#0F766E" Foreground="White" Margin="0,0,8,8"/>
             <Button Content="{DynamicResource Cat_BtnCategory}" Command="{Binding OpenAddCategoryDialogCommand}" Background="#D97706" Foreground="White" Margin="0,0,8,8"/>
+            <Button Content="{DynamicResource Cat_DeleteCategory}" Command="{Binding DeleteSelectedCategoryCommand}" Background="#B91C1C" Foreground="White" Margin="0,0,8,8"/>
             <Button Content="{DynamicResource Cat_AddProduct}" Command="{Binding OpenAddProductDialogCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,8"/>
             <Button Content="{DynamicResource Cat_AddDish}" Command="{Binding OpenAddDishDialogCommand}" Background="#2563EB" Foreground="White" Margin="0,0,8,8"/>
-            <Button Content="{DynamicResource Cat_EditSelected}" Command="{Binding OpenEditProductDialogCommand}" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,8"/>
+            <Button Content="{DynamicResource Cat_EditSelected}" Command="{Binding OpenEditProductDialogCommand}" Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisibilityConverter}}" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,8"/>
             <Button Content="{DynamicResource Cat_DeleteSelected}" Command="{Binding DeleteSelectedItemCommand}" Background="#DC2626" Foreground="White" Margin="0,0,8,8"/>
             <Button Content="{DynamicResource Cat_ResetAll}" Command="{Binding ApplyFiltersAndSearchCommand}" Click="ResetCategory_Click" Padding="8,4" Margin="0,4,10,4" Style="{StaticResource SecondaryButtonStyle}"/>
         </WrapPanel>
@@ -47,6 +52,36 @@
         </Border>
 
         <!-- ДІАЛОГИ -->
+        <Grid Grid.RowSpan="4" Background="#50000000" Visibility="{Binding IsGlobalCatalogDialogOpen, Converter={StaticResource BoolToVisibilityConverter}}">
+            <Border Background="White" CornerRadius="14" Padding="24" Width="720" MaxWidth="800" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="16">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="{DynamicResource Cat_GlobalCatalogDialogTitle}" FontSize="18" FontWeight="Bold" Margin="0,0,0,14"/>
+                    <TextBox Grid.Row="1" Text="{Binding GlobalCatalogSearchQuery, UpdateSourceTrigger=PropertyChanged}" ToolTip="{DynamicResource Cat_GlobalCatalogSearch}" Margin="0,0,0,12"/>
+
+                    <DataGrid Grid.Row="2" ItemsSource="{Binding GlobalCatalogProducts}" SelectedItem="{Binding SelectedGlobalCatalogProduct}" AutoGenerateColumns="False" IsReadOnly="True" MinHeight="260">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="{DynamicResource Cat_Name}" Binding="{Binding Name}" Width="*"/>
+                            <DataGridTextColumn Header="{DynamicResource Cat_Category}" Binding="{Binding Category.Name}" Width="180"/>
+                            <DataGridTextColumn Header="{DynamicResource Cat_Calories}" Binding="{Binding Calories, StringFormat={}{0:F0}}" Width="110"/>
+                            <DataGridTextColumn Header="{DynamicResource Cat_Proteins}" Binding="{Binding ProteinG, StringFormat={}{0:F1}}" Width="90"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
+                        <Button Content="{DynamicResource Btn_Cancel}" Command="{Binding CloseGlobalCatalogDialogCommand}" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0"/>
+                        <Button Content="{DynamicResource Cat_AddToPersonal}" Command="{Binding AddSelectedGlobalProductToPersonalCatalogCommand}" Visibility="{Binding IsUser, Converter={StaticResource BoolToVisibilityConverter}}" Style="{StaticResource PrimaryButtonStyle}"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+
         <Grid Grid.RowSpan="4" Background="#50000000" Visibility="{Binding IsCategoryDialogOpen, Converter={StaticResource BoolToVisibilityConverter}}">
             <Border Background="White" CornerRadius="14" Padding="24" Width="400" HorizontalAlignment="Center" VerticalAlignment="Center">
                 <StackPanel>
@@ -73,7 +108,7 @@
                         <TextBox Text="{Binding ProductName, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,10"/>
 
                         <TextBlock Text="{DynamicResource Cat_Category}" FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
-                        <ComboBox ItemsSource="{Binding Categories}" DisplayMemberPath="Name" SelectedItem="{Binding ProductSelectedCategory}" Margin="0,4,0,10"/>
+                        <ComboBox ItemsSource="{Binding GlobalCategories}" DisplayMemberPath="Name" SelectedItem="{Binding ProductSelectedCategory}" Margin="0,4,0,10"/>
 
                         <TextBlock Text="{DynamicResource Cat_Description}" FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
                         <TextBox Text="{Binding ProductDescription, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,10"/>

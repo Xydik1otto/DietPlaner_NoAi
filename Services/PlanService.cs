@@ -12,6 +12,7 @@ public class PlanService : IPlanService
     private readonly IRestrictionService _restrictionService;
     private readonly ILoggingService _logging;
     private readonly ILocalizationService _loc;
+    private readonly SessionService _session;
 
     private readonly record struct MealSlot(MealType MealType, string MealName, decimal TargetCalories);
 
@@ -36,23 +37,27 @@ public class PlanService : IPlanService
         INutritionCalculator calculator,
         IRestrictionService restrictionService,
         ILoggingService logging,
-        ILocalizationService loc)
+        ILocalizationService loc,
+        SessionService session)
     {
         _dbContextFactory = dbContextFactory;
         _calculator = calculator;
         _restrictionService = restrictionService;
         _logging = logging;
         _loc = loc;
+        _session = session;
     }
 
     public async Task<PlanGenerationResult> GenerateAsync(Guid userId, int mealCount, decimal? targetCalories = null, CancellationToken cancellationToken = default)
     {
+        mealCount = NormalizeMealCount(mealCount);
         var globalUsedCandidateIds = await GetRecentUsedCandidateIdsAsync(userId, cancellationToken);
         return await GenerateSingleDayPlanAsync(userId, mealCount, targetCalories, DateTime.UtcNow.Date, globalUsedCandidateIds, cancellationToken);
     }
 
     public async Task<IReadOnlyList<PlanGenerationResult>> GenerateWeekAsync(Guid userId, int mealCount, decimal? targetCalories = null, CancellationToken cancellationToken = default)
     {
+        mealCount = NormalizeMealCount(mealCount);
         var results = new List<PlanGenerationResult>();
         var globalUsedCandidateIds = await GetRecentUsedCandidateIdsAsync(userId, cancellationToken);
         var startDate = DateTime.UtcNow.Date;
@@ -117,7 +122,13 @@ public class PlanService : IPlanService
         double variancePercent = (Random.Shared.NextDouble() * 0.08) - 0.04;
         decimal effectiveCalories = Math.Round(baseTarget * (decimal)(1.0 + variancePercent));
 
-        var products = await db.Products.AsNoTracking().Where(p => p.IsActive).ToListAsync(cancellationToken);
+        var productsQuery = db.Products.AsNoTracking().Where(p => p.IsActive && p.IsGlobal);
+        if (user.Role == UserRole.User)
+        {
+            productsQuery = productsQuery.Where(p => p.UserCatalogItems.Any(link => link.UserId == userId));
+        }
+
+        var products = await productsQuery.ToListAsync(cancellationToken);
         var allowedProducts = new List<Product>();
         foreach (var p in products)
         {
@@ -125,9 +136,16 @@ public class PlanService : IPlanService
             if (check.Allowed && p.Calories > 0m) allowedProducts.Add(p);
         }
 
-        var dishes = await db.Dishes.AsNoTracking()
+        var visibleDishesQuery = db.Dishes.AsNoTracking()
             .Include(d => d.Ingredients).ThenInclude(i => i.Product)
-            .Where(d => d.IsActive).ToListAsync(cancellationToken);
+            .Where(d => d.IsActive);
+
+        if (user.Role == UserRole.Admin)
+            visibleDishesQuery = visibleDishesQuery.Where(d => d.OwnerUserId == null);
+        else
+            visibleDishesQuery = visibleDishesQuery.Where(d => d.OwnerUserId == null || d.OwnerUserId == userId);
+
+        var dishes = await visibleDishesQuery.ToListAsync(cancellationToken);
 
         var allowedDishes = new List<Dish>();
         foreach (var d in dishes)
@@ -381,9 +399,17 @@ public class PlanService : IPlanService
 
     public async Task<bool> ReplacePlanItemAsync(Guid planItemId, Guid? newProductId, Guid? newDishId, decimal portionGrams, CancellationToken cancellationToken = default)
     {
+        if (!_session.IsAuthenticated || _session.CurrentUser == null)
+            throw new UnauthorizedAccessException(_loc.GetString("Err_Unauthorized"));
+
         await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
-        var item = await db.PlanItems.FindAsync(new object[] { planItemId }, cancellationToken);
+        var item = await db.PlanItems
+            .Include(x => x.NutritionPlan)
+            .SingleOrDefaultAsync(x => x.Id == planItemId, cancellationToken);
         if (item == null) return false;
+
+        if (item.NutritionPlan == null || item.NutritionPlan.UserId != _session.CurrentUser.Id)
+            throw new UnauthorizedAccessException(_loc.GetString("Err_Unauthorized"));
 
         NutritionSnapshot nutrition = new(0m, 0m, 0m, 0m);
 
@@ -415,20 +441,36 @@ public class PlanService : IPlanService
         return true;
     }
 
+    private const int MinMealCount = 1;
+    private const int MaxMealCount = 8;
+
+    private static int NormalizeMealCount(int mealCount) =>
+        Math.Clamp(mealCount, MinMealCount, MaxMealCount);
+
     private Queue<MealSlot> BuildMealQueue(int mealCount, decimal totalCalories)
     {
         var queue = new Queue<MealSlot>();
-        mealCount = Math.Clamp(mealCount, 3, 6);
+        mealCount = NormalizeMealCount(mealCount);
 
+        var singleMeal = _loc.GetString("Meal_Single");
         var breakfast = _loc.GetString("Meal_Breakfast");
         var lunch = _loc.GetString("Meal_Lunch");
         var dinner = _loc.GetString("Meal_Dinner");
         var snack = _loc.GetString("Meal_Snack");
         var secondBreakfast = _loc.GetString("Meal_SecondBreakfast");
         var lateDinner = _loc.GetString("Meal_LateDinner");
+        var snack2 = _loc.GetString("Meal_Snack2");
+        var snack3 = _loc.GetString("Meal_Snack3");
 
         switch (mealCount)
         {
+            case 1:
+                queue.Enqueue(new MealSlot(MealType.Breakfast, singleMeal, totalCalories));
+                break;
+            case 2:
+                queue.Enqueue(new MealSlot(MealType.Breakfast, breakfast, totalCalories * 0.50m));
+                queue.Enqueue(new MealSlot(MealType.Dinner, dinner, totalCalories * 0.50m));
+                break;
             case 3:
                 queue.Enqueue(new MealSlot(MealType.Breakfast, breakfast, totalCalories * 0.30m));
                 queue.Enqueue(new MealSlot(MealType.Lunch, lunch, totalCalories * 0.40m));
@@ -454,6 +496,25 @@ public class PlanService : IPlanService
                 queue.Enqueue(new MealSlot(MealType.Snack, snack, totalCalories * 0.10m));
                 queue.Enqueue(new MealSlot(MealType.Dinner, dinner, totalCalories * 0.20m));
                 queue.Enqueue(new MealSlot(MealType.Snack, lateDinner, totalCalories * 0.10m));
+                break;
+            case 7:
+                queue.Enqueue(new MealSlot(MealType.Breakfast, breakfast, totalCalories * 0.18m));
+                queue.Enqueue(new MealSlot(MealType.Snack, secondBreakfast, totalCalories * 0.08m));
+                queue.Enqueue(new MealSlot(MealType.Lunch, lunch, totalCalories * 0.28m));
+                queue.Enqueue(new MealSlot(MealType.Snack, snack, totalCalories * 0.08m));
+                queue.Enqueue(new MealSlot(MealType.Dinner, dinner, totalCalories * 0.18m));
+                queue.Enqueue(new MealSlot(MealType.Snack, lateDinner, totalCalories * 0.08m));
+                queue.Enqueue(new MealSlot(MealType.Snack, snack2, totalCalories * 0.12m));
+                break;
+            case 8:
+                queue.Enqueue(new MealSlot(MealType.Breakfast, breakfast, totalCalories * 0.18m));
+                queue.Enqueue(new MealSlot(MealType.Snack, secondBreakfast, totalCalories * 0.08m));
+                queue.Enqueue(new MealSlot(MealType.Lunch, lunch, totalCalories * 0.25m));
+                queue.Enqueue(new MealSlot(MealType.Snack, snack, totalCalories * 0.08m));
+                queue.Enqueue(new MealSlot(MealType.Dinner, dinner, totalCalories * 0.18m));
+                queue.Enqueue(new MealSlot(MealType.Snack, lateDinner, totalCalories * 0.08m));
+                queue.Enqueue(new MealSlot(MealType.Snack, snack2, totalCalories * 0.07m));
+                queue.Enqueue(new MealSlot(MealType.Snack, snack3, totalCalories * 0.08m));
                 break;
         }
 

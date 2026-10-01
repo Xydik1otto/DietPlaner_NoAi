@@ -312,10 +312,14 @@ public sealed partial class ProfileViewModel : ViewModelBase
             var purposeText = _localization.GetString("Prof_Subtitle");
             await _emailService.SendVerificationCodeAsync(_pendingEmail, _generatedCode, purposeText);
             IsVerificationPending = true;
-            StatusMessage = $"{_pendingEmail}: {_generatedCode}";
+            StatusMessage = _localization.GetString("Prof_VerificationSent");
         }
         catch (Exception ex)
         {
+            _generatedCode = null;
+            _pendingEmail = null;
+            _pendingPassword = null;
+            IsVerificationPending = false;
             StatusMessage = ex.Message;
         }
     }
@@ -339,6 +343,8 @@ public sealed partial class ProfileViewModel : ViewModelBase
 
         IsVerificationPending = false;
         _generatedCode = null;
+        _pendingEmail = null;
+        _pendingPassword = null;
         NewEmail = string.Empty;
         NewPassword = string.Empty;
         VerificationCodeInput = string.Empty;
